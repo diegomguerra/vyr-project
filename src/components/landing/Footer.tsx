@@ -87,14 +87,14 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#beneficios" className="text-vyr-gray-400 hover:text-vyr-white transition-colors">
-                  Benefícios
-                </a>
-              </li>
-              <li>
                 <a href="#faq" className="text-vyr-gray-400 hover:text-vyr-white transition-colors">
                   FAQ
                 </a>
+              </li>
+              <li>
+                <Link to="/contato" className="text-vyr-gray-400 hover:text-vyr-white transition-colors">
+                  Contato
+                </Link>
               </li>
             </ul>
           </div>

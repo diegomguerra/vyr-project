@@ -1,91 +1,128 @@
 import { ClipboardCheck, TrendingUp, BarChart3, Brain, Zap, Moon, RefreshCw, Sun, Sunset } from "lucide-react";
 import dashboardPreview from "@/assets/dashboard-preview.png";
 import { LineChart, Line, AreaChart, Area, ResponsiveContainer, XAxis, YAxis } from "recharts";
-
-const trackingPillars = [
-  {
-    id: "ativacao",
-    title: "Ativação & Clareza",
-    period: "Manhã",
-    icon: Sun,
-    bgColor: "bg-vyr-gray-200/15",
-    borderColor: "border-vyr-gray-200/30",
-    textColor: "text-vyr-gray-100",
-    questions: ["Como foi seu foco nas primeiras horas?", "Clareza nas decisões matinais?", "Energia mental ao iniciar o dia?"]
-  },
-  {
-    id: "sustentacao",
-    title: "Sustentação & Resiliência",
-    period: "Tarde",
-    icon: Sunset,
-    bgColor: "bg-vyr-gray-400/15",
-    borderColor: "border-vyr-gray-400/30",
-    textColor: "text-vyr-gray-300",
-    questions: ["Manteve o ritmo após o almoço?", "Resistência à fadiga cognitiva?", "Equilíbrio emocional sob pressão?"]
-  },
-  {
-    id: "recuperacao",
-    title: "Recuperação Cognitiva",
-    period: "Noite",
-    icon: Moon,
-    bgColor: "bg-vyr-accent/15",
-    borderColor: "border-vyr-accent/30",
-    textColor: "text-vyr-accent",
-    questions: ["Qualidade do sono percebida?", "Facilidade para adormecer?", "Sensação ao acordar?"]
-  }
-];
-
-const platformFeatures = [
-  {
-    icon: ClipboardCheck,
-    title: "Registro Diário Simples",
-    description: "Check-ins rápidos após cada dose. Menos de 1 minuto por registro."
-  },
-  {
-    icon: TrendingUp,
-    title: "Evolução ao Longo do Tempo",
-    description: "Veja padrões emergirem semana após semana. Sua linha de base se constrói."
-  },
-  {
-    icon: BarChart3,
-    title: "Correlações Inteligentes",
-    description: "Entenda como rotina, sono e suplementação impactam sua constância."
-  }
-];
+const trackingPillars = [{
+  id: "ativacao",
+  title: "Ativação & Clareza",
+  period: "Manhã",
+  icon: Sun,
+  bgColor: "bg-vyr-gray-200/15",
+  borderColor: "border-vyr-gray-200/30",
+  textColor: "text-vyr-gray-100",
+  questions: ["Como foi seu foco nas primeiras horas?", "Clareza nas decisões matinais?", "Energia mental ao iniciar o dia?"]
+}, {
+  id: "sustentacao",
+  title: "Sustentação & Resiliência",
+  period: "Tarde",
+  icon: Sunset,
+  bgColor: "bg-vyr-gray-400/15",
+  borderColor: "border-vyr-gray-400/30",
+  textColor: "text-vyr-gray-300",
+  questions: ["Manteve o ritmo após o almoço?", "Resistência à fadiga cognitiva?", "Equilíbrio emocional sob pressão?"]
+}, {
+  id: "recuperacao",
+  title: "Recuperação Cognitiva",
+  period: "Noite",
+  icon: Moon,
+  bgColor: "bg-vyr-accent/15",
+  borderColor: "border-vyr-accent/30",
+  textColor: "text-vyr-accent",
+  questions: ["Qualidade do sono percebida?", "Facilidade para adormecer?", "Sensação ao acordar?"]
+}];
+const platformFeatures = [{
+  icon: ClipboardCheck,
+  title: "Registro Diário Simples",
+  description: "Check-ins rápidos após cada dose. Menos de 1 minuto por registro."
+}, {
+  icon: TrendingUp,
+  title: "Evolução ao Longo do Tempo",
+  description: "Veja padrões emergirem semana após semana. Sua linha de base se constrói."
+}, {
+  icon: BarChart3,
+  title: "Correlações Inteligentes",
+  description: "Entenda como rotina, sono e suplementação impactam sua constância."
+}];
 
 // Dados fictícios para os gráficos
-const performanceData = [
-  { day: "Seg", foco: 6.5, energia: 5.8, clareza: 6.2 },
-  { day: "Ter", foco: 7.2, energia: 6.5, clareza: 6.8 },
-  { day: "Qua", foco: 6.8, energia: 7.1, clareza: 7.0 },
-  { day: "Qui", foco: 7.8, energia: 7.5, clareza: 7.5 },
-  { day: "Sex", foco: 8.2, energia: 7.8, clareza: 8.1 },
-  { day: "Sab", foco: 7.5, energia: 8.2, clareza: 7.8 },
-  { day: "Dom", foco: 8.5, energia: 8.0, clareza: 8.4 }
-];
-
-const sleepData = [
-  { day: "Seg", qualidade: 65 },
-  { day: "Ter", qualidade: 72 },
-  { day: "Qua", qualidade: 68 },
-  { day: "Qui", qualidade: 78 },
-  { day: "Sex", qualidade: 82 },
-  { day: "Sab", qualidade: 85 },
-  { day: "Dom", qualidade: 88 }
-];
-
-const weeklyTrend = [
-  { week: "S1", score: 52 },
-  { week: "S2", score: 58 },
-  { week: "S3", score: 65 },
-  { week: "S4", score: 72 },
-  { week: "S5", score: 78 },
-  { week: "S6", score: 82 }
-];
-
+const performanceData = [{
+  day: "Seg",
+  foco: 6.5,
+  energia: 5.8,
+  clareza: 6.2
+}, {
+  day: "Ter",
+  foco: 7.2,
+  energia: 6.5,
+  clareza: 6.8
+}, {
+  day: "Qua",
+  foco: 6.8,
+  energia: 7.1,
+  clareza: 7.0
+}, {
+  day: "Qui",
+  foco: 7.8,
+  energia: 7.5,
+  clareza: 7.5
+}, {
+  day: "Sex",
+  foco: 8.2,
+  energia: 7.8,
+  clareza: 8.1
+}, {
+  day: "Sab",
+  foco: 7.5,
+  energia: 8.2,
+  clareza: 7.8
+}, {
+  day: "Dom",
+  foco: 8.5,
+  energia: 8.0,
+  clareza: 8.4
+}];
+const sleepData = [{
+  day: "Seg",
+  qualidade: 65
+}, {
+  day: "Ter",
+  qualidade: 72
+}, {
+  day: "Qua",
+  qualidade: 68
+}, {
+  day: "Qui",
+  qualidade: 78
+}, {
+  day: "Sex",
+  qualidade: 82
+}, {
+  day: "Sab",
+  qualidade: 85
+}, {
+  day: "Dom",
+  qualidade: 88
+}];
+const weeklyTrend = [{
+  week: "S1",
+  score: 52
+}, {
+  week: "S2",
+  score: 58
+}, {
+  week: "S3",
+  score: 65
+}, {
+  week: "S4",
+  score: 72
+}, {
+  week: "S5",
+  score: 78
+}, {
+  week: "S6",
+  score: 82
+}];
 export function PlatformSection() {
-  return (
-    <section id="plataforma" className="py-24 bg-vyr-black overflow-hidden">
+  return <section id="plataforma" className="py-24 bg-vyr-black overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
@@ -111,7 +148,7 @@ export function PlatformSection() {
 
         {/* Micro phrase */}
         <div className="text-center mb-12">
-          <p className="text-vyr-accent text-sm italic">
+          <p className="text-sm italic text-slate-300">
             Abrir o VYR hoje é se alinhar.
           </p>
         </div>
@@ -151,11 +188,7 @@ export function PlatformSection() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {trackingPillars.map(pillar => (
-              <div 
-                key={pillar.id} 
-                className={`relative p-6 rounded-2xl bg-vyr-gray-900/40 border ${pillar.borderColor} hover:bg-vyr-gray-900/60 transition-all duration-300`}
-              >
+            {trackingPillars.map(pillar => <div key={pillar.id} className={`relative p-6 rounded-2xl bg-vyr-gray-900/40 border ${pillar.borderColor} hover:bg-vyr-gray-900/60 transition-all duration-300`}>
                 {/* Period badge */}
                 <div className={`absolute -top-3 right-4 px-3 py-1 rounded-full ${pillar.bgColor} ${pillar.textColor} text-xs font-medium border ${pillar.borderColor}`}>
                   {pillar.period}
@@ -173,12 +206,10 @@ export function PlatformSection() {
 
                 {/* Questions */}
                 <ul className="space-y-2">
-                  {pillar.questions.map((question, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-sm text-vyr-gray-400">
+                  {pillar.questions.map((question, idx) => <li key={idx} className="flex items-start gap-2 text-sm text-vyr-gray-400">
                       <span className={`w-1.5 h-1.5 rounded-full mt-1.5 ${pillar.bgColor.replace('/15', '/60')}`} />
                       {question}
-                    </li>
-                  ))}
+                    </li>)}
                 </ul>
 
                 {/* Visual escala */}
@@ -188,17 +219,12 @@ export function PlatformSection() {
                     <span className={pillar.textColor}>1-10</span>
                   </div>
                   <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                      <div 
-                        key={n} 
-                        className={`flex-1 h-2 rounded-full ${n <= 7 ? pillar.bgColor : 'bg-vyr-gray-900'}`}
-                        style={{ opacity: n <= 7 ? 0.3 + n * 0.08 : 0.2 }} 
-                      />
-                    ))}
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <div key={n} className={`flex-1 h-2 rounded-full ${n <= 7 ? pillar.bgColor : 'bg-vyr-gray-900'}`} style={{
+                  opacity: n <= 7 ? 0.3 + n * 0.08 : 0.2
+                }} />)}
                   </div>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
 
@@ -242,11 +268,29 @@ export function PlatformSection() {
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={performanceData}>
-                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#404040', fontSize: 11 }} />
-                    <YAxis domain={[5, 10]} axisLine={false} tickLine={false} tick={{ fill: '#404040', fontSize: 11 }} />
-                    <Line type="monotone" dataKey="foco" stroke="#737373" strokeWidth={2} dot={{ fill: '#737373', r: 3, strokeWidth: 0 }} />
-                    <Line type="monotone" dataKey="energia" stroke="#404040" strokeWidth={2} dot={{ fill: '#404040', r: 3, strokeWidth: 0 }} />
-                    <Line type="monotone" dataKey="clareza" stroke="#3b4f63" strokeWidth={2} dot={{ fill: '#3b4f63', r: 3, strokeWidth: 0 }} />
+                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{
+                    fill: '#404040',
+                    fontSize: 11
+                  }} />
+                    <YAxis domain={[5, 10]} axisLine={false} tickLine={false} tick={{
+                    fill: '#404040',
+                    fontSize: 11
+                  }} />
+                    <Line type="monotone" dataKey="foco" stroke="#737373" strokeWidth={2} dot={{
+                    fill: '#737373',
+                    r: 3,
+                    strokeWidth: 0
+                  }} />
+                    <Line type="monotone" dataKey="energia" stroke="#404040" strokeWidth={2} dot={{
+                    fill: '#404040',
+                    r: 3,
+                    strokeWidth: 0
+                  }} />
+                    <Line type="monotone" dataKey="clareza" stroke="#3b4f63" strokeWidth={2} dot={{
+                    fill: '#3b4f63',
+                    r: 3,
+                    strokeWidth: 0
+                  }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -372,8 +416,7 @@ export function PlatformSection() {
 
         {/* Features da Plataforma */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {platformFeatures.map(feature => (
-            <div key={feature.title} className="flex items-start gap-4 p-5 rounded-xl bg-vyr-gray-900/30 border border-vyr-gray-600/30">
+          {platformFeatures.map(feature => <div key={feature.title} className="flex items-start gap-4 p-5 rounded-xl bg-vyr-gray-900/30 border border-vyr-gray-600/30">
               <div className="w-12 h-12 rounded-xl bg-vyr-gray-600/20 flex items-center justify-center flex-shrink-0">
                 <feature.icon className="w-6 h-6 text-vyr-gray-200" />
               </div>
@@ -381,8 +424,7 @@ export function PlatformSection() {
                 <h4 className="text-vyr-white font-medium mb-1">{feature.title}</h4>
                 <p className="text-vyr-gray-400 text-sm">{feature.description}</p>
               </div>
-            </div>
-          ))}
+            </div>)}
         </div>
 
         {/* Callout */}
@@ -395,6 +437,5 @@ export function PlatformSection() {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 }
