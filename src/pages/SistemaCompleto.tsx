@@ -103,8 +103,8 @@ function AllBoxesPreview() {
       
       {/* VYR CLEAR Box */}
       <div className="relative" style={{ perspective: "400px" }}>
-        <div 
-          className="relative w-16 sm:w-24 lg:w-28 h-22 sm:h-32 lg:h-40 rounded-sm bg-vyr-coldBlue flex flex-col items-center justify-center"
+        <div
+          className="relative w-16 sm:w-24 lg:w-28 h-22 sm:h-32 lg:h-40 rounded-sm bg-[#1E293B] flex flex-col items-center justify-center"
           style={{ transform: "rotateY(8deg)", boxShadow: "-6px 0 20px -5px rgba(0,0,0,0.5)" }}
         >
           <span className="font-mono text-[10px] sm:text-xs tracking-[0.35em] text-vyr-white font-medium">VYR</span>
@@ -424,7 +424,10 @@ export default function SistemaCompleto() {
                 </Button>
               </Link>
               <Link to="/rotina-completa">
-                <Button variant="outline" className="w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 text-sm sm:text-base font-mono border-vyr-gray-600 text-vyr-white hover:bg-vyr-gray-800 rounded-sm">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 text-sm sm:text-base font-mono border-vyr-gray-600 bg-vyr-white text-vyr-black hover:bg-vyr-gray-100 rounded-sm"
+                >
                   Ver Rotina Completa
                 </Button>
               </Link>

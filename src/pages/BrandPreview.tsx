@@ -7,8 +7,13 @@ import {
   AllProductMockups,
   NodeShowcase 
 } from "@/brand";
+import { FileDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function BrandPreview() {
+  const handleExportPDF = () => {
+    window.print();
+  };
   return (
     <div 
       className="min-h-screen"
@@ -24,15 +29,29 @@ export default function BrandPreview() {
       >
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <VYRLogo variant="light" size="md" />
-          <span 
-            className="text-xs tracking-[0.3em] opacity-40"
-            style={{ 
-              color: VYR_COLORS.gray[400],
-              fontFamily: VYR_TYPOGRAPHY.logo.fontFamily 
-            }}
-          >
-            BRAND IDENTITY — ATO 1
-          </span>
+          <div className="flex items-center gap-6">
+            <span 
+              className="text-xs tracking-[0.3em] opacity-40"
+              style={{ 
+                color: VYR_COLORS.gray[400],
+                fontFamily: VYR_TYPOGRAPHY.logo.fontFamily 
+              }}
+            >
+              BRAND IDENTITY — ATO 1
+            </span>
+            <Button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 print:hidden"
+              style={{ 
+                backgroundColor: VYR_COLORS.white,
+                color: VYR_COLORS.black,
+                fontFamily: VYR_TYPOGRAPHY.logo.fontFamily
+              }}
+            >
+              <FileDown className="w-4 h-4" />
+              EXPORTAR PDF
+            </Button>
+          </div>
         </div>
       </header>
       

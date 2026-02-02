@@ -10,7 +10,7 @@ const supplements = [{
   icon: Sun,
   period: "Manhã",
   tagline: "Ativação com leveza",
-  description: "Ajuda a iniciar o dia com clareza, sem aceleração excessiva. Menos inércia mental. Mais prontidão limpa.",
+  description: "Ajuda a iniciar o dia com clareza, menos atrito mental. Mais energia limpa.",
   benefits: ["Atenção mais estável", "Menos esforço para começar", "Clareza sem tensão"],
   bgColor: "bg-vyr-gray-100",
   borderColor: "border-vyr-gray-300",
@@ -38,9 +38,9 @@ const supplements = [{
   icon: Moon,
   period: "Noite",
   tagline: "Descompressão cognitiva",
-  description: "Ajuda o sistema a desacelerar para recuperar melhor. Menos resíduo mental. Mais leveza no dia seguinte.",
+  description: "Ajuda o sistema a desacelerar para recuperar melhor. Mais leveza no dia seguinte.",
   benefits: ["Redução de carga acumulada", "Recuperação mais consistente", "Transição mais suave para o descanso"],
-  bgColor: "bg-vyr-coldBlue",
+  bgColor: "bg-[#1E293B]",
   borderColor: "border-vyr-gray-600",
   textColor: "text-vyr-white",
   sachets: "30 sachês",
@@ -136,7 +136,7 @@ function AllBoxesPreview() {
       <div className="relative" style={{
       perspective: "400px"
     }}>
-        <div className="relative w-20 sm:w-28 lg:w-36 h-28 sm:h-36 lg:h-48 rounded-sm bg-vyr-coldBlue flex flex-col items-center justify-center" style={{
+        <div className="relative w-20 sm:w-28 lg:w-36 h-28 sm:h-36 lg:h-48 rounded-sm bg-[#1E293B] flex flex-col items-center justify-center" style={{
         transform: "rotateY(8deg)",
         boxShadow: "-6px 0 20px -5px rgba(0,0,0,0.5)"
       }}>
