@@ -8,25 +8,11 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Sun, Moon, Brain } from "lucide-react";
-import Landing from "./pages/Landing";
 import Login from "./pages/Login";
-import VYRLabs from "./pages/VYRLabs";
-import VYRNutrition from "./pages/VYRNutrition";
-import VYRNode from "./pages/VYRNode";
-import VYRScience from "./pages/VYRScience";
-import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
-import RotinaCompleta from "./pages/RotinaCompleta";
-import SistemaCompleto from "./pages/SistemaCompleto";
-import VYRSystem from "./pages/VYRSystem";
-import ComoFunciona from "./pages/ComoFunciona";
 import Dashboard from "./pages/Dashboard";
 import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
 import Welcome from "./pages/Welcome";
-import BrandPreview from "./pages/BrandPreview";
-import BrandExport from "./pages/BrandExport";
-import Contact from "./pages/Contact";
 import { NavSidebar } from "./components/nzt";
 import { signOut, getParticipante, createParticipante } from "./lib/api";
 import { ThemeProvider, useTheme } from "./hooks/use-theme";
@@ -54,14 +40,14 @@ function Header({ codigo }: { codigo?: string }) {
   };
 
   return (
-    <header className="sticky top-0 z-10 bg-gradient-to-r from-vyr-gray-900 via-vyr-graphite-dark/95 to-vyr-gray-900/90 backdrop-blur-xl border-b border-vyr-graphite/50">
+    <header className="sticky top-0 z-10 bg-gradient-to-r from-vyr-gray-900 via-vyr-graphite-dark/95 to-vyr-gray-900/90 backdrop-blur-xl border-b border-vyr-graphite/50 safe-area-top">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
         <div className="min-w-0 flex-1 flex items-center gap-3">
           <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-vyr-graphite to-vyr-accent flex items-center justify-center shadow-lg shadow-vyr-accent/10">
             <Brain className="w-4 h-4 text-vyr-white" />
           </div>
           <div>
-            <h1 className="font-bold text-vyr-white text-sm sm:text-base font-mono tracking-wide">VYR</h1>
+            <h1 className="font-bold text-vyr-white text-sm sm:text-base font-mono tracking-wide">VYR Labs</h1>
             <p className="text-[10px] sm:text-xs text-vyr-gray-400">
               {codigo ? `ID: ${codigo}` : "Carregando..."}
             </p>
@@ -82,15 +68,15 @@ function Header({ codigo }: { codigo?: string }) {
 }
 
 const NAV_ITEMS = [
-  { to: "/app/painel", label: "Painel", icon: "📊" },
-  { to: "/app/anamnese", label: "Anamnese", icon: "📋" },
-  { to: "/app/perfil", label: "Perfil", icon: "👤" },
+  { to: "/painel", label: "Painel", icon: "📊" },
+  { to: "/anamnese", label: "Anamnese", icon: "📋" },
+  { to: "/perfil", label: "Perfil", icon: "👤" },
 ];
 
 function MobileNav() {
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-vyr-graphite-dark/95 backdrop-blur-xl border-t border-vyr-graphite/50">
-      <div className="flex items-center justify-around py-2 px-1 safe-area-inset-bottom">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-vyr-graphite-dark/95 backdrop-blur-xl border-t border-vyr-graphite/50 safe-area-bottom">
+      <div className="flex items-center justify-around py-2 px-1">
         {NAV_ITEMS.map((item) => (
           <Link
             key={item.to}
@@ -134,8 +120,8 @@ function AuthenticatedApp() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Inicializando perfil...</div>
+      <div className="min-h-screen flex items-center justify-center vyr-gradient-bg">
+        <div className="text-vyr-gray-400 font-mono text-sm">Inicializando...</div>
       </div>
     );
   }
@@ -161,11 +147,11 @@ function AuthenticatedApp() {
         </div>
         <main className="flex flex-col gap-4 animate-fade-in min-w-0">
           <Routes>
-            <Route path="/" element={<Navigate to="/app/painel" replace />} />
+            <Route path="/" element={<Navigate to="/painel" replace />} />
             <Route path="/painel" element={<Dashboard />} />
             <Route path="/anamnese" element={<Onboarding />} />
             <Route path="/perfil" element={<Profile />} />
-            <Route path="*" element={<Navigate to="/app/painel" replace />} />
+            <Route path="*" element={<Navigate to="/painel" replace />} />
           </Routes>
         </main>
       </div>
@@ -202,8 +188,8 @@ const App = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Carregando...</div>
+      <div className="min-h-screen flex items-center justify-center vyr-gradient-bg">
+        <div className="text-vyr-gray-400 font-mono text-sm">Carregando...</div>
       </div>
     );
   }
@@ -217,29 +203,18 @@ const App = () => {
           <Router>
             <ScrollToTop />
             <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/brand-preview" element={<BrandPreview />} />
-              <Route path="/brand-export" element={<BrandExport />} />
-              <Route path="/nutrition" element={<VYRNutrition />} />
-              <Route path="/node" element={<VYRNode />} />
-              <Route path="/science" element={<VYRScience />} />
-              <Route path="/produtos" element={<Products />} />
-              <Route path="/produtos/:id" element={<ProductDetail />} />
-              <Route path="/rotina-completa" element={<RotinaCompleta />} />
-              <Route path="/sistema-completo" element={<SistemaCompleto />} />
-              <Route path="/sistema" element={<VYRSystem />} />
-              <Route path="/como-funciona" element={<ComoFunciona />} />
-              <Route path="/contato" element={<Contact />} />
-              <Route path="/labs" element={user ? <Navigate to="/app" replace /> : <VYRLabs />} />
-              <Route path="/login" element={<Navigate to="/labs" replace />} />
-
-              {/* Protected routes */}
-              <Route
-                path="/app/*"
-                element={user ? <AuthenticatedApp /> : <Navigate to="/login" replace />}
-              />
-
+              {/* Unauthenticated → Login */}
+              <Route path="/" element={user ? <Navigate to="/painel" replace /> : <Login />} />
+              
+              {/* Authenticated routes */}
+              <Route path="/painel" element={user ? <AuthenticatedApp /> : <Navigate to="/" replace />} />
+              <Route path="/anamnese" element={user ? <AuthenticatedApp /> : <Navigate to="/" replace />} />
+              <Route path="/perfil" element={user ? <AuthenticatedApp /> : <Navigate to="/" replace />} />
+              
+              {/* Legacy redirect */}
+              <Route path="/app/*" element={<Navigate to="/painel" replace />} />
+              <Route path="/labs" element={<Navigate to="/" replace />} />
+              
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

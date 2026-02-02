@@ -2,9 +2,9 @@ import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, ClipboardList, User } from "lucide-react";
 
 const NAV_ITEMS = [
-  { to: "/app/painel", label: "Painel", icon: LayoutDashboard },
-  { to: "/app/anamnese", label: "Anamnese", icon: ClipboardList },
-  { to: "/app/perfil", label: "Perfil", icon: User },
+  { to: "/painel", label: "Painel", icon: LayoutDashboard },
+  { to: "/anamnese", label: "Anamnese", icon: ClipboardList },
+  { to: "/perfil", label: "Perfil", icon: User },
 ];
 
 export function NavSidebar() {

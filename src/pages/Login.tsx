@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Card } from "@/components/nzt";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { signInWithEmail, signUpWithEmail } from "@/lib/api";
-import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Brain } from "lucide-react";
 
 export default function Login() {
-  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -22,10 +22,21 @@ export default function Login() {
     }
   }, [searchParams]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  // Check if already authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/painel", { replace: true });
+      }
+    };
+    checkAuth();
+  }, [navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim() || !password.trim()) {
+    if (!email || !password) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha email e senha.",
@@ -47,7 +58,14 @@ export default function Login() {
 
     try {
       if (isSignUp) {
-        const { error } = await signUpWithEmail(email, password);
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/painel`,
+          },
+        });
+
         if (error) {
           if (error.message.includes("already registered")) {
             toast({
@@ -60,12 +78,16 @@ export default function Login() {
           }
         } else {
           toast({
-            title: "Conta criada!",
+            title: "Conta criada",
             description: "Verifique seu email para confirmar o cadastro.",
           });
         }
       } else {
-        const { error } = await signInWithEmail(email, password);
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
         if (error) {
           if (error.message.includes("Invalid login credentials")) {
             toast({
@@ -76,6 +98,8 @@ export default function Login() {
           } else {
             throw error;
           }
+        } else {
+          navigate("/painel", { replace: true });
         }
       }
     } catch (error: any) {
@@ -87,79 +111,95 @@ export default function Login() {
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative vyr-gradient-bg">
-      {/* Background Grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--vyr-gray-700)/0.1)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--vyr-gray-700)/0.1)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-      
-      {/* Accent glow */}
-      <div className="absolute top-1/4 right-1/4 w-[300px] h-[300px] rounded-full blur-[150px] opacity-20" style={{ background: 'radial-gradient(circle, hsl(var(--vyr-accent)) 0%, transparent 70%)' }} />
-      
-      <div className="relative z-10 w-full max-w-md">
-        {/* Back Link */}
-        <Link 
-          to="/" 
-          className="inline-flex items-center gap-2 text-vyr-gray-500 hover:text-vyr-accent transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm">Voltar para início</span>
-        </Link>
+    <div className="min-h-screen vyr-gradient-bg flex items-center justify-center p-4 safe-area-inset">
+      {/* Subtle radial glow */}
+      <div className="fixed inset-0 vyr-gradient-radial opacity-30 pointer-events-none" />
 
-        <Card title="VYR • Plataforma" subtitle={isSignUp ? "Criar nova conta" : "Acesse sua conta"}>
-          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-vyr-gray-100">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-                autoComplete="email"
-                className="bg-vyr-gray-900 border-vyr-gray-500/30 text-vyr-white placeholder:text-vyr-gray-500"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-vyr-gray-100">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-                className="bg-vyr-gray-900 border-vyr-gray-500/30 text-vyr-white placeholder:text-vyr-gray-500"
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full vyr-btn-accent font-mono" 
-              disabled={isLoading}
-            >
-              {isLoading ? "Aguarde..." : isSignUp ? "Criar conta" : "Entrar"}
-            </Button>
-          </form>
-
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              className="text-sm text-vyr-gray-500 hover:text-vyr-accent transition-colors"
-              onClick={() => setIsSignUp(!isSignUp)}
-            >
-              {isSignUp ? "Já tem conta? Faça login" : "Não tem conta? Cadastre-se"}
-            </button>
+      <div className="relative w-full max-w-sm space-y-8">
+        {/* Logo & Header */}
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 mx-auto rounded-lg bg-gradient-to-br from-vyr-graphite to-vyr-accent flex items-center justify-center shadow-xl shadow-vyr-accent/20">
+            <Brain className="w-8 h-8 text-vyr-white" />
           </div>
+          <div>
+            <h1 className="text-2xl font-bold text-vyr-white font-mono tracking-wide">VYR Labs</h1>
+            <p className="text-xs text-vyr-gray-500 font-mono mt-1">
+              Performance cognitiva mensurável
+            </p>
+          </div>
+        </div>
 
-          <p className="mt-4 text-xs text-vyr-gray-500 text-center">
-            Plataforma de acompanhamento de performance cognitiva.
-          </p>
-        </Card>
+        {/* Login Card */}
+        <div className="vyr-card-graphite p-6 sm:p-8">
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <h2 className="text-lg font-medium text-vyr-white">
+                {isSignUp ? "Criar conta" : "Entrar"}
+              </h2>
+              <p className="text-xs text-vyr-gray-500 font-mono">
+                {isSignUp ? "Registre-se para começar" : "Acesse sua conta"}
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-xs text-vyr-gray-400">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-vyr-graphite-dark border-vyr-graphite text-vyr-white text-sm placeholder:text-vyr-gray-600"
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-xs text-vyr-gray-400">
+                  Senha
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-vyr-graphite-dark border-vyr-graphite text-vyr-white text-sm placeholder:text-vyr-gray-600"
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-vyr-white hover:bg-vyr-gray-100 text-vyr-black text-sm font-medium h-11"
+              >
+                {isLoading ? "Processando..." : isSignUp ? "Criar conta" : "Entrar"}
+              </Button>
+            </form>
+
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-xs text-vyr-gray-500 hover:text-vyr-white transition-colors"
+              >
+                {isSignUp ? "Já tem conta? Entrar" : "Não tem conta? Criar"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer note */}
+        <p className="text-center text-[10px] text-vyr-gray-600 font-mono">
+          Clareza mental é construída com consistência.
+        </p>
       </div>
     </div>
   );
