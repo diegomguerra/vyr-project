@@ -168,6 +168,34 @@ export interface SachetConfirmation {
   nextReadingIn: string;   // "aproximadamente 2-3 horas"
 }
 
+// ===== WEARABLE CONNECTION TYPES =====
+
+export type WearableProvider = 
+  | "apple_health"
+  | "garmin"
+  | "oura"
+  | "samsung"
+  | "whoop"
+  | "google_fit"
+  | "fitbit";
+
+export type SyncStatus = "synced" | "pending" | "error";
+
+export interface WearableConnection {
+  connected: boolean;
+  provider: WearableProvider | null;
+  lastSync: Date | null;
+  syncStatus: SyncStatus;
+  baselineDays: number; // 0-7
+}
+
+export interface WearableProviderInfo {
+  id: WearableProvider;
+  name: string;
+  icon: string;
+  description: string;
+}
+
 // ===== STORE TYPES =====
 
 export interface VYRStore {
@@ -176,4 +204,5 @@ export interface VYRStore {
   dailyReviews: DailyReview[];
   actionLogs: ActionLog[];
   historyByDay: HistoryDay[];
+  wearableConnection: WearableConnection;
 }
