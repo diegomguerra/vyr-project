@@ -74,6 +74,11 @@ export default {
             clareza: "hsl(var(--vyr-clareza))",
             estabilidade: "hsl(var(--vyr-estabilidade))",
           },
+          status: {
+            positive: "hsl(var(--vyr-positive))",
+            caution: "hsl(var(--vyr-caution))",
+            negative: "hsl(var(--vyr-negative))",
+          },
           ring: {
             track: "hsl(var(--vyr-ring-track))",
             glow: "hsl(var(--vyr-ring-glow))",
