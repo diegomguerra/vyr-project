@@ -92,7 +92,7 @@ export default function MomentActionPage({ action, onBack, onConfirm }: MomentAc
       </div>
 
       {/* Botão de ação fixo no bottom */}
-      <div className="px-6 pb-8 pt-4 bg-gradient-to-t from-vyr-bg-primary via-vyr-bg-primary to-transparent">
+      <div className="px-6 pb-28 pt-4 bg-gradient-to-t from-vyr-bg-primary via-vyr-bg-primary to-transparent">
         <ActionButton
           action={action}
           label={copy.buttonText}

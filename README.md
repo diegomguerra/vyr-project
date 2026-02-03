@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+# VYR App - Sync Test
 
 ## Project info
 
