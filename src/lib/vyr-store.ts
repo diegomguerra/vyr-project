@@ -12,6 +12,8 @@ import type {
   DayContext,
   SachetConfirmation,
   DetectedPattern,
+  WearableConnection,
+  WearableProvider,
 } from "./vyr-types";
 import { computeState } from "./vyr-engine";
 import { 
@@ -25,6 +27,15 @@ import {
   detectPatterns,
 } from "./vyr-interpreter";
 import { generate30DayHistory, toHistoryDay, DEMO_SCENARIOS } from "./vyr-mock-data";
+
+// Estado inicial de conexão com wearable
+const initialWearableConnection: WearableConnection = {
+  connected: false,
+  provider: null,
+  lastSync: null,
+  syncStatus: "pending",
+  baselineDays: 0,
+};
 
 // Gera estado VYR completo a partir de dados de wearable
 function buildVYRState(context: DayContext, currentAction: MomentAction): VYRState {
@@ -146,6 +157,11 @@ export function useVYRStore() {
   // Confirmação de sachê
   const [sachetConfirmation, setSachetConfirmation] = useState<SachetConfirmation | null>(null);
   
+  // Wearable connection state
+  const [wearableConnection, setWearableConnection] = useState<WearableConnection>(
+    initialWearableConnection
+  );
+  
   // Estado VYR derivado
   const state = useMemo(() => 
     buildVYRState(todayContext, currentAction),
@@ -224,6 +240,29 @@ export function useVYRStore() {
     logAction(action);
   }, [logAction]);
 
+  // Wearable connection actions
+  const connectWearable = useCallback((provider: WearableProvider) => {
+    setWearableConnection({
+      connected: true,
+      provider,
+      lastSync: new Date(),
+      syncStatus: "synced",
+      baselineDays: 7, // Simula baseline completo para demo
+    });
+  }, []);
+
+  const disconnectWearable = useCallback(() => {
+    setWearableConnection(initialWearableConnection);
+  }, []);
+
+  const syncWearable = useCallback(() => {
+    setWearableConnection(prev => ({
+      ...prev,
+      lastSync: new Date(),
+      syncStatus: "synced",
+    }));
+  }, []);
+
   return {
     // Estado principal
     state,
@@ -241,11 +280,17 @@ export function useVYRStore() {
     todayContext,
     fullHistory: history,
     
+    // Wearable
+    wearableConnection,
+    
     // Actions
     addCheckpoint,
     logAction,
     dismissConfirmation,
     activateTransition,
+    connectWearable,
+    disconnectWearable,
+    syncWearable,
   };
 }
 

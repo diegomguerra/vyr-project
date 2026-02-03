@@ -25,6 +25,11 @@
     --vyr-clareza: 217 91% 60%;          /* Azul clareza */
     --vyr-estabilidade: 160 84% 39%;     /* Verde estabilidade */
 
+    /* Cores semânticas para status */
+    --vyr-positive: 160 84% 39%;         /* Verde - favorável */
+    --vyr-caution: 38 92% 50%;           /* Âmbar - atenção */
+    --vyr-negative: 0 72% 51%;           /* Coral/vermelho - limitante */
+
     /* Shadcn compatibility */
     --background: var(--vyr-bg-primary);
     --foreground: var(--vyr-text-primary);
