@@ -10,18 +10,13 @@ on:
 
 jobs:
   build-and-deploy:
+    # CRITICAL: Only run in vyr-project repository (has ios/ folder)
+    if: github.repository == 'diegomguerra/vyr-project'
     runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Check for ios folder
-        run: |
-          if [ ! -d "ios" ]; then
-            echo "No ios/ folder found - this workflow should only run in vyr-project"
-            exit 0
-          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
