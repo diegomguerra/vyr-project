@@ -13,3 +13,7 @@ export { CognitiveWindowCard } from "./CognitiveWindowCard";
 export { TransitionCard } from "./TransitionCard";
 export { PatternCard } from "./PatternCard";
 export { SachetConfirmation } from "./SachetConfirmation";
+
+// Wearable connection
+export { default as ConnectionStatus } from "./ConnectionStatus";
+export { default as WearableConnected } from "./WearableConnected";
