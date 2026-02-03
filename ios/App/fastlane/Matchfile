@@ -1,0 +1,4 @@
+git_url(ENV["MATCH_GIT_URL"])
+storage_mode("git")
+type("appstore")
+app_identifier("app.lovable.4b617b0406fc49f6b961158f27f7c863")
