@@ -1,4 +1,4 @@
-# VYR App - Sync Test
+# VYR App - Direct Sync Active
 
 ## Project info
 
