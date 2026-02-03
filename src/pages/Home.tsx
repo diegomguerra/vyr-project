@@ -12,6 +12,7 @@ import {
   CognitiveWindowCard,
   TransitionCard,
   SachetConfirmation,
+  ConnectionStatus,
 } from "@/components/vyr";
 import type { 
   VYRState, 
@@ -21,6 +22,7 @@ import type {
   SuggestedTransition,
   SachetConfirmation as SachetConfirmationType,
   MomentAction,
+  WearableConnection,
 } from "@/lib/vyr-types";
 
 interface HomeProps {
@@ -32,11 +34,13 @@ interface HomeProps {
   cognitiveWindow?: CognitiveWindow;
   suggestedTransition?: SuggestedTransition;
   sachetConfirmation?: SachetConfirmationType | null;
+  wearableConnection: WearableConnection;
   onScoreTap: () => void;
   onActionTap: () => void;
   onActivateTransition?: (action: MomentAction) => void;
   onDismissConfirmation?: () => void;
   onAddObservation?: () => void;
+  onConnectionTap?: () => void;
 }
 
 export default function Home({ 
@@ -47,21 +51,29 @@ export default function Home({
   cognitiveWindow,
   suggestedTransition,
   sachetConfirmation,
+  wearableConnection,
   onScoreTap, 
   onActionTap,
   onActivateTransition,
   onDismissConfirmation,
   onAddObservation,
+  onConnectionTap,
 }: HomeProps) {
   // Pegar score de ontem para o delta
   const yesterdayScore = historyByDay.length > 1 ? historyByDay[1].score : state.vyrStateScore;
 
   return (
     <div className="min-h-screen bg-vyr-bg-primary px-5 py-6 pb-28">
-      {/* Saudação */}
-      <p className="text-vyr-text-secondary text-base mb-8 animate-fade-in">
-        {greeting}
-      </p>
+      {/* Connection Status + Saudação */}
+      <div className="flex items-center justify-between mb-6 animate-fade-in">
+        <p className="text-vyr-text-secondary text-base">
+          {greeting}
+        </p>
+        <ConnectionStatus 
+          connection={wearableConnection} 
+          onTap={onConnectionTap} 
+        />
+      </div>
 
       {/* RING CENTRAL - VYR STATE */}
       <div className="flex flex-col items-center mb-8">

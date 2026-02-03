@@ -8,18 +8,18 @@ interface ContextCardProps {
   context: PhysiologicalContext;
 }
 
-const STATUS_CONFIG: Record<ContextStatus, { color: string; icon: string }> = {
+const STATUS_CONFIG: Record<ContextStatus, { dotColor: string; textColor: string }> = {
   favorable: {
-    color: "text-vyr-pillar-estabilidade",
-    icon: "🟢",
+    dotColor: "bg-vyr-status-positive",
+    textColor: "text-vyr-text-secondary",
   },
   attention: {
-    color: "text-vyr-accent-transition",
-    icon: "🟡",
+    dotColor: "bg-vyr-status-caution",
+    textColor: "text-vyr-text-secondary",
   },
   limiting: {
-    color: "text-red-400",
-    icon: "🔴",
+    dotColor: "bg-vyr-status-negative",
+    textColor: "text-vyr-text-secondary",
   },
 };
 
@@ -34,9 +34,9 @@ export function ContextCard({ context }: ContextCardProps) {
         {context.items.map((item, index) => {
           const config = STATUS_CONFIG[item.status];
           return (
-            <div key={index} className="flex items-center gap-2.5">
-              <span className="text-sm">{config.icon}</span>
-              <span className={`text-sm ${config.color}`}>
+            <div key={index} className="flex items-center gap-3">
+              <span className={`w-2.5 h-2.5 rounded-full ${config.dotColor}`} />
+              <span className={`text-sm ${config.textColor}`}>
                 {item.label}
               </span>
             </div>
