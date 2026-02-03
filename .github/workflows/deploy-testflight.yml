@@ -43,6 +43,11 @@ jobs:
           cd ios/App
           bundle install
 
+      - name: Configure Git credentials for Match
+        run: |
+          git config --global credential.helper store
+          echo "https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com" > ~/.git-credentials
+
       - name: Deploy to TestFlight
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
