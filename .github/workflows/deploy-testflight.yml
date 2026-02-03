@@ -44,9 +44,13 @@ jobs:
           bundle install
 
       - name: Configure Git credentials for Match
+        env:
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
         run: |
-          git config --global credential.helper store
-          echo "https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com" > ~/.git-credentials
+          if [ -z "$MATCH_GIT_BASIC_AUTHORIZATION" ]; then
+            echo "MATCH_GIT_BASIC_AUTHORIZATION is not set. Please add it as a secret."
+            exit 1
+          fi
 
       - name: Deploy to TestFlight
         env:
@@ -55,6 +59,8 @@ jobs:
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          MATCH_READONLY: "false"
           APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
         run: |
           cd ios/App

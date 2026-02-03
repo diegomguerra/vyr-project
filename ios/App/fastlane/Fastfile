@@ -14,7 +14,7 @@ platform :ios do
 
     match(
       type: "appstore",
-      readonly: true,
+      readonly: ENV.fetch("MATCH_READONLY", "true") == "true",
       api_key: api_key
     )
 
