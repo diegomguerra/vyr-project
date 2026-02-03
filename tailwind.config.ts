@@ -1,6 +1,16 @@
 import type { Config } from "tailwindcss";
 
-// VYR Labs Design System - Conforme spec do prompt
+/* ═══════════════════════════════════════════════════════════════════════════
+   VYR LABS DESIGN SYSTEM — TAILWIND CONFIG
+   
+   PROIBIÇÕES:
+   ❌ Vermelho puro | ❌ Verde neon | ❌ Azul ciano
+   ❌ Gradiente chamativo | ❌ Glow | ❌ Shadow forte
+   ❌ Skeleton branco | ❌ Cards coloridos por estado
+   
+   Se parecer "bonito demais", está errado.
+   Se parecer calmo e inteligente, está certo.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 export default {
   darkMode: ["class"],
@@ -16,6 +26,7 @@ export default {
     },
     extend: {
       colors: {
+        /* Shadcn semantic tokens */
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -49,31 +60,46 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // VYR Labs tokens
+        
+        /* ─────────────────────────────────────────────────────────────────────
+           VYR LABS TOKENS
+           ───────────────────────────────────────────────────────────────────── */
         vyr: {
+          /* Fundos */
           bg: {
-            primary: "hsl(var(--vyr-bg-primary))",
-            surface: "hsl(var(--vyr-bg-surface))",
-            elevated: "hsl(var(--vyr-bg-elevated))",
+            primary: "hsl(var(--vyr-bg-primary))",     /* #0E0F12 VYR Black */
+            surface: "hsl(var(--vyr-bg-surface))",    /* #14161B VYR Graphite */
+            elevated: "hsl(var(--vyr-bg-elevated))",  /* #1C1F26 VYR Ash */
           },
+          /* Tipografia */
           text: {
-            primary: "hsl(var(--vyr-text-primary))",
-            secondary: "hsl(var(--vyr-text-secondary))",
-            muted: "hsl(var(--vyr-text-muted))",
+            primary: "hsl(var(--vyr-text-primary))",     /* #ECEEF2 VYR Ice */
+            secondary: "hsl(var(--vyr-text-secondary))", /* #A7ADB8 VYR Fog */
+            muted: "hsl(var(--vyr-text-muted))",         /* #6F7683 VYR Dust */
           },
+          /* Divisores */
           stroke: {
-            divider: "hsl(var(--vyr-stroke-divider))",
+            divider: "hsl(var(--vyr-stroke-divider))", /* #232733 VYR Line */
           },
+          /* Acentos funcionais */
           accent: {
-            action: "hsl(var(--vyr-accent-action))",
-            transition: "hsl(var(--vyr-accent-transition))",
-            glow: "hsl(var(--vyr-accent-glow))",
+            action: "hsl(var(--vyr-accent-action))",       /* #3A5EFF Focus Blue */
+            stable: "hsl(var(--vyr-accent-stable))",       /* #4F6F64 Moss Green */
+            transition: "hsl(var(--vyr-accent-transition))", /* #8F7A4A Amber Clay */
           },
+          /* Pilares cognitivos (micro-sinais) */
           pillar: {
-            energia: "hsl(var(--vyr-energia))",
-            clareza: "hsl(var(--vyr-clareza))",
-            estabilidade: "hsl(var(--vyr-estabilidade))",
+            energia: "hsl(var(--vyr-energia))",           /* #5F6C7A Energy Slate */
+            clareza: "hsl(var(--vyr-clareza))",           /* #6B7F9C Clarity IceBlue */
+            estabilidade: "hsl(var(--vyr-estabilidade))", /* #4A5E57 Stability Pine */
           },
+          /* Status semântico */
+          status: {
+            positive: "hsl(var(--vyr-positive))",  /* Moss Green */
+            caution: "hsl(var(--vyr-caution))",    /* Amber Clay */
+            neutral: "hsl(var(--vyr-negative))",   /* Dust (nunca vermelho) */
+          },
+          /* Ring gauge */
           ring: {
             track: "hsl(var(--vyr-ring-track))",
             glow: "hsl(var(--vyr-ring-glow))",
@@ -92,7 +118,6 @@ export default {
         "3xl": "1.5rem",
       },
       fontSize: {
-        // Tipografia conforme spec
         "vyr-score": ["64px", { lineHeight: "1", fontWeight: "500" }],
         "vyr-title": ["18px", { lineHeight: "1.4", fontWeight: "500" }],
         "vyr-body": ["16px", { lineHeight: "1.5", fontWeight: "400" }],
@@ -123,7 +148,6 @@ export default {
         "slide-up": "slide-up 200ms ease-out",
       },
       spacing: {
-        // Espaçamentos conforme spec
         "vyr-margin": "20px",
         "vyr-padding": "16px",
       },
