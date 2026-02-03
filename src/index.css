@@ -4,28 +4,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* VYR Labs Design System - Conforme spec do prompt */
+/* ═══════════════════════════════════════════════════════════════════════════
+   VYR LABS DESIGN SYSTEM — IDENTIDADE VISUAL OFICIAL
+   
+   PRINCÍPIOS (NÃO NEGOCIÁVEIS):
+   ❌ Nada neon | ❌ Nada saturado | ❌ Nada fitness/bio
+   ❌ Nada que grite atenção | ❌ Nada que gamifique estado
+   
+   A cor na VYR não anima, não excita, não recompensa.
+   Ela orienta, organiza e estabiliza.
+   
+   "A VYR não colore emoções. Ela organiza estados."
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer base {
   :root {
-    /* VYR Labs - Tokens de cor (spec) */
-    --vyr-bg-primary: 228 14% 7%;        /* #0E0F12 */
-    --vyr-bg-surface: 226 13% 9%;        /* #111318 */
-    --vyr-bg-elevated: 226 14% 12%;      /* Superfície elevada */
-    --vyr-text-primary: 230 20% 94%;     /* #EDEEF2 */
-    --vyr-text-secondary: 218 11% 65%;   /* #9CA3AF */
-    --vyr-text-muted: 218 11% 46%;       /* #6B7280 */
-    --vyr-stroke-divider: 222 18% 15%;   /* #1F2430 */
-    --vyr-accent-action: 217 91% 60%;    /* #3B82F6 - Azul foco */
-    --vyr-accent-transition: 38 91% 64%; /* #F59E0B - Âmbar transição */
-    --vyr-accent-glow: 217 91% 70%;      /* Azul mais claro para glow */
-
-    /* Cores semânticas para pilares */
-    --vyr-energia: 38 92% 50%;           /* Âmbar energia */
-    --vyr-clareza: 217 91% 60%;          /* Azul clareza */
-    --vyr-estabilidade: 160 84% 39%;     /* Verde estabilidade */
-
-    /* Shadcn compatibility */
+    /* ─────────────────────────────────────────────────────────────────────────
+       PALETA BASE OFICIAL — VYR LABS (CORE)
+       Presente em 100% do app. Nunca deve ser alterada.
+       ───────────────────────────────────────────────────────────────────────── */
+    
+    /* 🎯 Fundos */
+    --vyr-bg-primary: 225 14% 6%;        /* VYR Black #0E0F12 - fundo principal */
+    --vyr-bg-surface: 223 16% 9%;        /* VYR Graphite #14161B - cards */
+    --vyr-bg-elevated: 222 17% 13%;      /* VYR Ash #1C1F26 - modais, Labs */
+    
+    /* 📝 Tipografia */
+    --vyr-text-primary: 220 20% 94%;     /* VYR Ice #ECEEF2 - texto principal */
+    --vyr-text-secondary: 219 10% 69%;   /* VYR Fog #A7ADB8 - subtítulos */
+    --vyr-text-muted: 218 8% 47%;        /* VYR Dust #6F7683 - captions */
+    
+    /* ─ Divisores */
+    --vyr-stroke-divider: 225 18% 17%;   /* VYR Line #232733 - bordas sutis */
+    
+    /* ─────────────────────────────────────────────────────────────────────────
+       PALETAS FUNCIONAIS — ACENTO CONTROLADO
+       Poucas cores de acento, sempre dessaturadas.
+       ───────────────────────────────────────────────────────────────────────── */
+    
+    /* 🔵 Acento Primário — FOCO / AÇÃO (discreto) */
+    --vyr-accent-action: 220 25% 45%;    /* VYR Slate Blue #556B8A - mais sutil */
+    
+    /* 🟢 Acento Secundário — ESTABILIDADE */
+    --vyr-accent-stable: 161 17% 37%;    /* VYR Moss Green #4F6F64 */
+    
+    /* 🟠 Acento de Transição — AJUSTE / ATENÇÃO (usar raramente) */
+    --vyr-accent-transition: 42 32% 42%; /* VYR Amber Clay #8F7A4A */
+    
+    /* ─────────────────────────────────────────────────────────────────────────
+       PALETA DE ESTADOS — SEMÂNTICA (micro-sinais, não UI dominante)
+       ───────────────────────────────────────────────────────────────────────── */
+    
+    /* Pilares cognitivos */
+    --vyr-energia: 211 13% 43%;          /* VYR Energy Slate #5F6C7A */
+    --vyr-clareza: 214 20% 51%;          /* VYR Clarity IceBlue #6B7F9C */
+    --vyr-estabilidade: 162 13% 33%;     /* VYR Stability Pine #4A5E57 */
+    
+    /* Status (micro-sinais apenas) */
+    --vyr-positive: 161 17% 37%;         /* Moss Green - estável */
+    --vyr-caution: 42 32% 42%;           /* Amber Clay - ajuste */
+    --vyr-negative: 218 8% 47%;          /* Dust - neutro (nunca vermelho) */
+    
+    /* ─────────────────────────────────────────────────────────────────────────
+       SHADCN COMPATIBILITY
+       ───────────────────────────────────────────────────────────────────────── */
     --background: var(--vyr-bg-primary);
     --foreground: var(--vyr-text-primary);
     --card: var(--vyr-bg-surface);
@@ -33,33 +75,33 @@
     --popover: var(--vyr-bg-surface);
     --popover-foreground: var(--vyr-text-primary);
     --primary: var(--vyr-accent-action);
-    --primary-foreground: 0 0% 100%;
+    --primary-foreground: 220 20% 94%;
     --secondary: var(--vyr-bg-surface);
     --secondary-foreground: var(--vyr-text-secondary);
-    --muted: var(--vyr-bg-surface);
+    --muted: var(--vyr-bg-elevated);
     --muted-foreground: var(--vyr-text-muted);
-    --accent: var(--vyr-bg-surface);
+    --accent: var(--vyr-bg-elevated);
     --accent-foreground: var(--vyr-text-primary);
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: var(--vyr-accent-transition);
+    --destructive-foreground: var(--vyr-text-primary);
     --border: var(--vyr-stroke-divider);
     --input: var(--vyr-stroke-divider);
     --ring: var(--vyr-accent-action);
-    --radius: 0.875rem;
+    --radius: 0.75rem;
 
-    /* Sidebar (se usado) */
+    /* Sidebar */
     --sidebar-background: var(--vyr-bg-primary);
     --sidebar-foreground: var(--vyr-text-primary);
     --sidebar-primary: var(--vyr-accent-action);
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary-foreground: 220 20% 94%;
     --sidebar-accent: var(--vyr-bg-surface);
     --sidebar-accent-foreground: var(--vyr-text-primary);
     --sidebar-border: var(--vyr-stroke-divider);
     --sidebar-ring: var(--vyr-accent-action);
 
     /* Ring gauge tokens */
-    --vyr-ring-track: 222 18% 18%;
-    --vyr-ring-glow: 217 91% 60% / 0.4;
+    --vyr-ring-track: 225 18% 17%;
+    --vyr-ring-glow: 220 25% 45% / 0.15;
   }
 
   /* Dark mode é o padrão - não há modo claro nesta versão */
