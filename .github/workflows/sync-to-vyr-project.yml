@@ -1,0 +1,84 @@
+# Sync workflow v2 - with jq merge for package.json
+name: Sync VYR app -> VYR project
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source (vyr-app)
+        uses: actions/checkout@v4
+
+      - name: Checkout target (vyr-project)
+        uses: actions/checkout@v4
+        with:
+          repository: diegomguerra/vyr-project
+          token: ${{ secrets.SYNC_TOKEN }}
+          path: target
+          ref: main
+
+      - name: Sync front-end (preserve native folders)
+        run: |
+          set -e
+
+          rsync -av --delete --exclude ".git/" ./src/ target/src/
+          rsync -av --delete --exclude ".git/" ./public/ target/public/
+          
+          # Sync workflows (without --delete to preserve target-only workflows)
+          mkdir -p target/.github/workflows
+          rsync -av ./.github/workflows/ target/.github/workflows/
+
+          if [ -d "./supabase" ]; then
+            mkdir -p target/supabase
+            rsync -av --delete ./supabase/ target/supabase/
+          fi
+
+          cp -f ./index.html target/index.html
+          # Merge package.json: source deps + inject Capacitor deps (v8)
+          jq -s '
+            .[0] as $source | .[1] as $target |
+            {
+              "name": $target.name,
+              "private": true,
+              "version": "0.0.0",
+              "type": "module",
+              "scripts": ($target.scripts + $source.scripts),
+              "dependencies": ($source.dependencies + {
+                "@capacitor/core": "^8.0.0",
+                "@capacitor/ios": "^8.0.0",
+                "@capacitor/android": "^8.0.0"
+              }),
+              "devDependencies": ($source.devDependencies + {
+                "@capacitor/cli": "^8.0.0"
+              })
+            }
+          ' ./package.json target/package.json > target/package.json.tmp
+          mv target/package.json.tmp target/package.json
+
+          for f in vite.config.ts vite.config.js vercel.json tailwind.config.ts tailwind.config.js postcss.config.js eslint.config.js components.json tsconfig.json tsconfig.app.json tsconfig.node.json .gitignore .env.example README.md; do
+            if [ -f "./$f" ]; then
+              cp -f "./$f" "target/$f"
+            fi
+          done
+
+      - name: Commit and push to main
+        run: |
+          cd target
+          git config user.name "vyr-sync-bot"
+          git config user.email "vyr-sync-bot@users.noreply.github.com"
+
+          git add .
+          if git diff --cached --quiet; then
+            echo "No changes to sync."
+            exit 0
+          fi
+
+          git commit -m "Sync front from vyr-app (source ${{ github.sha }})"
+          git push origin main
