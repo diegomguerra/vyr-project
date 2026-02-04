@@ -49,10 +49,10 @@ export default function ConnectionStatus({ connection, onTap }: ConnectionStatus
     return (
       <button
         onClick={onTap}
-        className="flex items-center gap-2 bg-vyr-status-negative/10 rounded-full px-3 py-1.5 transition-opacity active:opacity-80"
+        className="flex items-center gap-2 bg-red-500/10 rounded-full px-3 py-1.5 transition-opacity active:opacity-80"
       >
-        <AlertCircle className="w-4 h-4 text-vyr-status-negative" />
-        <span className="text-vyr-status-negative text-xs font-medium">
+        <AlertCircle className="w-4 h-4 text-red-500" />
+        <span className="text-red-500 text-xs font-medium">
           Wearable não conectado
         </span>
       </button>
