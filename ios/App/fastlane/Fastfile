@@ -1,35 +1,46 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Push a new beta build to TestFlight"
+  desc "Deploy to TestFlight"
   lane :beta do
-    match_readonly = ENV.fetch("MATCH_READONLY", "false") == "true"
-    setup_ci if ENV['CI']
-
+    setup_ci if is_ci
+    
+    # Override readonly mode to allow cert creation
+    ENV["MATCH_READONLY"] = "false"
+    
     api_key = app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
       issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
-      key_content: Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY"]),
-      is_key_content_base64: false
+      key_content: ENV["APP_STORE_CONNECT_API_KEY"],
+      is_key_content_base64: true
     )
 
     match(
       type: "appstore",
-      readonly: match_readonly,
-      api_key: api_key
+      readonly: false,
+      api_key: api_key,
+      force_for_new_devices: true
     )
 
     increment_build_number(
-      build_number: ENV["GITHUB_RUN_NUMBER"] || "1",
-      xcodeproj: "App.xcodeproj"
+      xcodeproj: "App.xcodeproj",
+      build_number: Time.now.strftime("%Y%m%d%H%M")
     )
 
-    build_app(
-      workspace: "App.xcworkspace",
+    gym(
       scheme: "App",
-      export_method: "app-store"
+      configuration: "Release",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          "com.vyrlabs.app" => "match AppStore com.vyrlabs.app"
+        }
+      }
     )
 
-    upload_to_testflight(api_key: api_key)
+    pilot(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true
+    )
   end
 end
