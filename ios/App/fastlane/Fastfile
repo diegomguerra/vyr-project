@@ -17,7 +17,7 @@ platform :ios do
 
     match(
       type: "appstore",
-      readonly: false,
+      readonly: true,
       api_key: api_key,
       force_for_new_devices: true
     )
