@@ -46,6 +46,21 @@ jobs:
       # ✅ CORREÇÃO 3: removido o step antigo que tentava usar SYNC_TOKEN via ~/.git-credentials
       # (ele conflita e não garante auth pro repo do MATCH)
 
+      - name: Detect Match repo default branch
+        env:
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+        run: |
+          set -euo pipefail
+          MATCH_BRANCH=$(git -c http.extraheader="AUTHORIZATION: basic ${MATCH_GIT_BASIC_AUTHORIZATION}" \
+            ls-remote --symref "${MATCH_GIT_URL}" HEAD | awk '/^ref:/ {sub("refs\/heads\/","",$2); print $2; exit}')
+          if [ -z "${MATCH_BRANCH}" ]; then
+            echo "Could not detect default branch for Match repo." >&2
+            exit 1
+          fi
+          echo "MATCH_GIT_BRANCH=${MATCH_BRANCH}" >> "${GITHUB_ENV}"
+          echo "Detected Match repo branch: ${MATCH_BRANCH}"
+
       - name: Deploy to TestFlight
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
