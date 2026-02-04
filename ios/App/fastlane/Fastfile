@@ -3,6 +3,7 @@ default_platform(:ios)
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
+    match_readonly = ENV.fetch("MATCH_READONLY", "true") == "true"
     setup_ci if ENV['CI']
 
     api_key = app_store_connect_api_key(
@@ -14,6 +15,7 @@ platform :ios do
 
     match(
       type: "appstore",
+      readonly: match_readonly,
       readonly: ENV.fetch("MATCH_READONLY", "true") == "true",
       api_key: api_key
     )
