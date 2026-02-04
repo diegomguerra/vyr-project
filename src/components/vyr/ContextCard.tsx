@@ -26,9 +26,12 @@ const STATUS_CONFIG: Record<ContextStatus, { dotColor: string; textColor: string
 export function ContextCard({ context }: ContextCardProps) {
   return (
     <div className="bg-vyr-bg-surface rounded-2xl p-4">
-      <span className="text-vyr-text-muted text-xs font-medium tracking-wider uppercase block mb-3">
+      <span className="text-vyr-text-muted text-xs font-medium tracking-wider uppercase block mb-1">
         Contexto do dia
       </span>
+      <p className="text-vyr-text-muted/70 text-xs mb-3">
+        Fatores fisiológicos que influenciam seu estado atual
+      </p>
       
       <div className="space-y-2.5">
         {context.items.map((item, index) => {

@@ -133,6 +133,7 @@ export default function Home({
         <InsightCard
           type="insight"
           title="Leitura do sistema"
+          subtitle="Análise integrada dos seus biomarcadores e pilares"
           detail={state.systemReading.dayRisk}
         >
           <p>{state.systemReading.whyScore}</p>
@@ -147,12 +148,15 @@ export default function Home({
         onClick={onScoreTap}
         className="w-full bg-vyr-bg-surface rounded-2xl p-4 mb-4 text-left transition-opacity active:opacity-80 animate-stagger-4"
       >
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-1">
           <span className="text-vyr-text-muted text-xs font-medium tracking-wider uppercase">
             Hoje isso significa
           </span>
           <ChevronRight className="w-4 h-4 text-vyr-text-muted" />
         </div>
+        <p className="text-vyr-text-muted/70 text-xs mb-3">
+          Consequências práticas do seu estado para o dia
+        </p>
         
         <ul className="space-y-2">
           {state.todayMeaning.map((meaning, index) => (
@@ -178,6 +182,21 @@ export default function Home({
 
       {/* AÇÃO PRINCIPAL */}
       <div className="space-y-3 animate-stagger-4">
+        {/* Explicação da ação */}
+        <div className="bg-vyr-bg-surface rounded-xl px-4 py-3">
+          <span className="text-vyr-text-muted text-xs font-medium tracking-wider uppercase block mb-1">
+            {state.momentAction === "BOOT" ? "Ação recomendada" :
+             state.momentAction === "HOLD" ? "Modo atual" : "Transição sugerida"}
+          </span>
+          <p className="text-vyr-text-muted/70 text-xs">
+            {state.momentAction === "BOOT" 
+              ? "O sachê de ativação prepara o sistema para foco e produtividade. Ideal para iniciar períodos de trabalho intenso."
+              : state.momentAction === "HOLD"
+              ? "O sachê de sustentação mantém o estado atual estável. Indicado para preservar a performance ao longo do dia."
+              : "O sachê de recuperação prepara o sistema para descanso. Ideal para encerrar o dia e otimizar a restauração."}
+          </p>
+        </div>
+
         <ActionButton
           action={state.momentAction}
           label={state.momentActionTitle}

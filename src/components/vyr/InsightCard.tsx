@@ -11,6 +11,8 @@ interface InsightCardProps {
   type?: InsightType;
   /** Título do card */
   title: string;
+  /** Subtítulo explicativo */
+  subtitle?: string;
   /** Conteúdo principal */
   children: ReactNode;
   /** Linha de detalhe adicional */
@@ -46,6 +48,7 @@ const INSIGHT_STYLES: Record<InsightType, {
 export function InsightCard({ 
   type = "insight",
   title,
+  subtitle,
   children,
   detail
 }: InsightCardProps) {
@@ -67,9 +70,14 @@ export function InsightCard({
         </div>
         
         <div className="flex-1 min-w-0">
-          <h3 className="text-vyr-text-primary text-sm font-medium mb-1">
+          <h3 className="text-vyr-text-primary text-sm font-medium mb-0.5">
             {title}
           </h3>
+          {subtitle && (
+            <p className="text-vyr-text-muted/70 text-xs mb-2">
+              {subtitle}
+            </p>
+          )}
           <div className="text-vyr-text-secondary text-sm leading-relaxed">
             {children}
           </div>

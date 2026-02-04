@@ -15,12 +15,15 @@ export function CognitiveWindowCard({ window }: CognitiveWindowProps) {
 
   return (
     <div className="bg-vyr-bg-surface border border-vyr-accent-action/20 rounded-2xl p-4">
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-1">
         <Clock className="w-4 h-4 text-vyr-accent-action" />
         <span className="text-vyr-accent-action text-xs font-medium tracking-wider uppercase">
           Janela cognitiva
         </span>
       </div>
+      <p className="text-vyr-text-muted/70 text-xs mb-3">
+        Período ideal identificado para tarefas que exigem concentração
+      </p>
       
       <p className="text-vyr-text-primary text-sm mb-2">
         Próximas <span className="font-medium">{window.duration}</span> são favoráveis
