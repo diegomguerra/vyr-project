@@ -30,7 +30,7 @@ export function ContextCard({ context }: ContextCardProps) {
         Contexto do dia
       </span>
       <p className="text-vyr-text-muted/70 text-xs mb-3">
-        Fatores fisiológicos que influenciam seu estado atual
+        Sinais do seu corpo que o sistema interpreta para entender como você está hoje — sem mostrar números, apenas o que importa.
       </p>
       
       <div className="space-y-2.5">

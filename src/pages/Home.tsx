@@ -133,7 +133,7 @@ export default function Home({
         <InsightCard
           type="insight"
           title="Leitura do sistema"
-          subtitle="Análise integrada dos seus biomarcadores e pilares"
+          subtitle="Resumo inteligente do que está acontecendo no seu corpo agora — por que seu score é esse e o que pode limitar seu dia."
           detail={state.systemReading.dayRisk}
         >
           <p>{state.systemReading.whyScore}</p>
@@ -155,7 +155,7 @@ export default function Home({
           <ChevronRight className="w-4 h-4 text-vyr-text-muted" />
         </div>
         <p className="text-vyr-text-muted/70 text-xs mb-3">
-          Consequências práticas do seu estado para o dia
+          Traduzimos seu estado em impactos reais: o que você pode esperar do seu desempenho hoje.
         </p>
         
         <ul className="space-y-2">
@@ -185,15 +185,18 @@ export default function Home({
         {/* Explicação da ação */}
         <div className="bg-vyr-bg-surface rounded-xl px-4 py-3">
           <span className="text-vyr-text-muted text-xs font-medium tracking-wider uppercase block mb-1">
-            {state.momentAction === "BOOT" ? "Ação recomendada" :
+            {state.momentAction === "BOOT" ? "Próximo passo sugerido" :
              state.momentAction === "HOLD" ? "Modo atual" : "Transição sugerida"}
           </span>
-          <p className="text-vyr-text-muted/70 text-xs">
+          <p className="text-vyr-text-muted/70 text-xs mb-2">
             {state.momentAction === "BOOT" 
-              ? "O sachê de ativação prepara o sistema para foco e produtividade. Ideal para iniciar períodos de trabalho intenso."
+              ? "O sistema recomenda iniciar o ciclo cognitivo. O sachê BOOT prepara seu corpo para foco e produtividade nas próximas horas."
               : state.momentAction === "HOLD"
-              ? "O sachê de sustentação mantém o estado atual estável. Indicado para preservar a performance ao longo do dia."
-              : "O sachê de recuperação prepara o sistema para descanso. Ideal para encerrar o dia e otimizar a restauração."}
+              ? "Você já ativou o sistema. O sachê HOLD mantém seu estado estável, preservando a clareza mental ao longo do dia."
+              : "É hora de preparar a recuperação. O sachê CLEAR sinaliza ao corpo que o período de exigência acabou, otimizando o descanso."}
+          </p>
+          <p className="text-vyr-text-muted/50 text-[10px]">
+            Os sachês fazem parte do protocolo VYR — cada um atua em um momento específico do seu ciclo cognitivo diário.
           </p>
         </div>
 

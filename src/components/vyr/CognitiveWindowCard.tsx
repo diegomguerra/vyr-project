@@ -22,7 +22,7 @@ export function CognitiveWindowCard({ window }: CognitiveWindowProps) {
         </span>
       </div>
       <p className="text-vyr-text-muted/70 text-xs mb-3">
-        Período ideal identificado para tarefas que exigem concentração
+        Com base nos seus biomarcadores, o sistema detectou uma janela onde seu foco tende a ser mais eficiente.
       </p>
       
       <p className="text-vyr-text-primary text-sm mb-2">
