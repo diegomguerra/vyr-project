@@ -10,15 +10,15 @@ interface ContextCardProps {
 
 const STATUS_CONFIG: Record<ContextStatus, { dotColor: string; textColor: string }> = {
   favorable: {
-    dotColor: "bg-vyr-status-positive",
+    dotColor: "bg-vyr-accent-action",      // Slate Blue - nítido
     textColor: "text-vyr-text-secondary",
   },
   attention: {
-    dotColor: "bg-vyr-status-caution",
+    dotColor: "bg-vyr-text-muted",         // Dust Gray - neutro
     textColor: "text-vyr-text-secondary",
   },
   limiting: {
-    dotColor: "bg-vyr-status-negative",
+    dotColor: "bg-vyr-pillar-energia",     // Energy Slate - sóbrio
     textColor: "text-vyr-text-secondary",
   },
 };
