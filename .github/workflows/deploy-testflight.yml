@@ -48,6 +48,13 @@ jobs:
           git config --global credential.helper store
           echo "https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com" > ~/.git-credentials
 
+      - name: Verify Match repo access
+        env:
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+        run: |
+          echo "Checking access to MATCH_GIT_URL..."
+          git -c credential.helper='store' ls-remote "$MATCH_GIT_URL" || { echo "Cannot access MATCH_GIT_URL"; exit 1; }
+
       - name: Deploy to TestFlight
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
@@ -58,4 +65,23 @@ jobs:
           APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
         run: |
           cd ios/App
-          FASTLANE_DEBUG=1 bundle exec fastlane beta
+          echo "Ruby: $(ruby -v)"
+          echo "Bundler: $(bundle -v || true)"
+          bundle list || true
+          set -o pipefail
+          export FASTLANE_DISABLE_COLORS=1
+          FASTLANE_DEBUG=1 bundle exec fastlane beta 2>&1 | tee "$GITHUB_WORKSPACE/fastlane-beta.log"
+          exit_code=${PIPESTATUS[0]}
+          echo "FASTLANE_EXIT_CODE=$exit_code" > "$GITHUB_WORKSPACE/fastlane-beta-exit"
+          if [ "$exit_code" -ne 0 ]; then
+            echo "Fastlane failed with exit code $exit_code"
+            exit $exit_code
+          fi
+
+      - name: Upload fastlane logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: fastlane-beta-logs
+          path: |
+            ${{ github.workspace }}/fastlane-beta.log
+            ${{ github.workspace }}/fastlane-beta-exit
