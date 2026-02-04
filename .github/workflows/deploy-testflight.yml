@@ -58,4 +58,4 @@ jobs:
           APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
         run: |
           cd ios/App
-          bundle exec fastlane beta
+          FASTLANE_DEBUG=1 bundle exec fastlane beta
