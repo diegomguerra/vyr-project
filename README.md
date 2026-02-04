@@ -4,6 +4,24 @@
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
+## CI secrets for TestFlight (GitHub Actions)
+
+The Deploy to TestFlight workflow expects these secrets:
+
+- `APP_STORE_CONNECT_API_KEY_ID`
+- `APP_STORE_CONNECT_API_ISSUER_ID`
+- `APP_STORE_CONNECT_API_KEY`
+- `APP_STORE_CONNECT_TEAM_ID`
+- `MATCH_PASSWORD`
+- `MATCH_GIT_URL`
+- `MATCH_GIT_BASIC_AUTHORIZATION` (Base64 of `x-access-token:<PAT>` for the Match repo)
+
+You can generate `MATCH_GIT_BASIC_AUTHORIZATION` like this (do **not** commit the output):
+
+```sh
+printf 'x-access-token:%s' "$PAT" | base64
+```
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
