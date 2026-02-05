@@ -3,24 +3,31 @@ default_platform(:ios)
 platform :ios do
   desc "Build + Deploy to TestFlight"
   lane :beta do
-    # CI setup
     setup_ci
 
-   match(
-  type: "appstore",
-  readonly: false,
-  force_for_new_devices: true,
-  git_url: ENV["MATCH_GIT_URL"],
-  git_basic_authorization: ENV["MATCH_GIT_BASIC_AUTHORIZATION"],
-  git_branch: ENV["MATCH_GIT_BRANCH"] || "master"
-)
+    # App Store Connect API Key (Hash) - REQUIRED for match/pilot in CI
+    asc_api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY"],
+      is_key_content_base64: true,
+      in_house: false
+    )
 
-    # Build number (timestamp)
+    match(
+      type: "appstore",
+      readonly: false,
+      api_key: asc_api_key,
+      force_for_new_devices: true,
+      git_url: ENV["MATCH_GIT_URL"],
+      git_basic_authorization: ENV["MATCH_GIT_BASIC_AUTHORIZATION"],
+      git_branch: ENV["MATCH_GIT_BRANCH"] || "master"
+    )
+
     increment_build_number(
       build_number: Time.now.strftime("%Y%m%d%H%M")
     )
 
-    # Build + Archive
     gym(
       scheme: "App",
       configuration: "Release",
@@ -30,12 +37,11 @@ platform :ios do
           "com.vyrlabs.app" => "match AppStore com.vyrlabs.app"
         }
       },
-      # (adiantando o próximo erro comum: "requires a development team")
       xcargs: "DEVELOPMENT_TEAM=#{ENV['APP_STORE_CONNECT_TEAM_ID']}"
     )
 
-    # Upload to TestFlight
     pilot(
+      api_key: asc_api_key,
       skip_waiting_for_build_processing: true
     )
   end
