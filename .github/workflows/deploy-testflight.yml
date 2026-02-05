@@ -43,10 +43,10 @@ jobs:
           cd ios/App
           bundle install
 
-      - name: Configure Git credentials for Match
+      - name: Codesign diagnostics (no secrets)
         run: |
-          git config --global credential.helper store
-          echo "https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com" > ~/.git-credentials
+          security find-identity -v -p codesigning
+          ls -la ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
 
       - name: Deploy to TestFlight
         env:
@@ -56,7 +56,7 @@ jobs:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
-          MATCH_GIT_BRANCH: master
+          MATCH_GIT_BRANCH: ${{ secrets.MATCH_GIT_BRANCH }}
           APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
         run: |
           cd ios/App
