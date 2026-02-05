@@ -26,6 +26,15 @@ printf 'x-access-token:%s' "$PAT" | base64
 If your certificates repository uses a branch other than `master`, set the `MATCH_GIT_BRANCH`
 secret accordingly (for example, `main`).
 
+## iOS TestFlight CI notes
+
+- The TestFlight workflow runs entirely on a GitHub Actions **macOS** runner; no local Mac is
+  required to build or upload the iOS app.
+- The workflow expects `npx cap sync ios` to run before Fastlane so Xcode project files stay in
+  sync with the web build.
+- The Fastlane lane uses Match with App Store distribution profiles and injects the correct
+  provisioning profile during archive to avoid "iOS App Development" signing in Release builds.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
