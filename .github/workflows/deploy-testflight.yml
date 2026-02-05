@@ -43,11 +43,6 @@ jobs:
           cd ios/App
           bundle install
 
-      - name: Codesign diagnostics (no secrets)
-        run: |
-          security find-identity -v -p codesigning
-          ls -la ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
-
       - name: Deploy to TestFlight
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
