@@ -28,17 +28,19 @@ platform :ios do
       build_number: Time.now.strftime("%Y%m%d%H%M")
     )
 
-    gym(
-      scheme: "App",
-      configuration: "Release",
-      export_method: "app-store",
-      export_options: {
-        provisioningProfiles: {
-          "com.vyrlabs.app" => "match AppStore com.vyrlabs.app"
-        }
-      },
-      xcargs: "DEVELOPMENT_TEAM=#{ENV['APP_STORE_CONNECT_TEAM_ID']}"
-    )
+   gym(
+  scheme: "App",
+  configuration: "Release",
+  export_method: "app-store",
+  clean: true,
+  destination: "generic/platform=iOS",
+  export_options: {
+    signingStyle: "manual",
+    teamID: ENV["APP_STORE_CONNECT_TEAM_ID"],
+    provisioningProfiles: mapping
+  },
+  xcargs: "DEVELOPMENT_TEAM=#{ENV['APP_STORE_CONNECT_TEAM_ID']} CODE_SIGN_STYLE=Manual"
+)
 
     pilot(
       api_key: asc_api_key,
