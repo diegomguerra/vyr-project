@@ -26,82 +26,41 @@ platform :ios do
       build_number: Time.now.strftime("%Y%m%d%H%M")
     )
 
-    mapping = Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
-    bundle_id = "com.vyrlabs.app"
-    profile_name = mapping[bundle_id]
+    # -----------------------------
+    # Archive (executar no diretório correto)
+    # -----------------------------
+    Dir.chdir("..") do
+      sh([
+        "set -o pipefail &&",
+        "xcodebuild",
+        "-project App.xcodeproj",
+        "-scheme App",
+        "-configuration Release",
+        "-archivePath fastlane/build/App.xcarchive",
+        "CODE_SIGN_STYLE=Manual",
+        "CODE_SIGN_IDENTITY='Apple Distribution'",
+        "DEVELOPMENT_TEAM=#{ENV['APP_STORE_CONNECT_TEAM_ID']}",
+        "PROVISIONING_PROFILE_SPECIFIER='match AppStore com.vyrlabs.app 1770256240'",
+        "archive"
+      ].join(" "))
+    end
 
-    UI.user_error!("No provisioning profile mapping found for #{bundle_id}") if profile_name.to_s.strip.empty?
+    # -----------------------------
+    # Export IPA
+    # -----------------------------
+    Dir.chdir("..") do
+      sh([
+        "set -o pipefail &&",
+        "xcodebuild",
+        "-exportArchive",
+        "-archivePath fastlane/build/App.xcarchive",
+        "-exportPath fastlane/build/export",
+        "-exportOptionsPlist fastlane/ExportOptions.plist"
+      ].join(" "))
+    end
 
-    team_id = ENV.fetch("APP_STORE_CONNECT_TEAM_ID")
-
-    # Paths
-    project_path = "App.xcodeproj"
-    scheme = "App"
-    archive_path = File.expand_path("build/#{scheme}.xcarchive", Dir.pwd)
-    export_dir = File.expand_path("build/export", Dir.pwd)
-    export_plist = File.expand_path("build/ExportOptions.plist", Dir.pwd)
-
-    # Ensure build dirs
-    sh("mkdir -p build")
-    sh("mkdir -p #{export_dir.shellescape}")
-
-    # ExportOptions.plist (manual signing + explicit profile mapping)
-    plist_content = <<~PLIST
-      <?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-      <plist version="1.0">
-      <dict>
-        <key>method</key>
-        <string>app-store</string>
-        <key>signingStyle</key>
-        <string>manual</string>
-        <key>teamID</key>
-        <string>#{team_id}</string>
-        <key>provisioningProfiles</key>
-        <dict>
-          <key>#{bundle_id}</key>
-          <string>#{profile_name}</string>
-        </dict>
-        <key>uploadBitcode</key>
-        <false/>
-        <key>compileBitcode</key>
-        <false/>
-      </dict>
-      </plist>
-    PLIST
-
-    File.write(export_plist, plist_content)
-
-    # Clean previous archive if exists
-    sh("rm -rf #{archive_path.shellescape}")
-
-    # 1) Archive
-    sh([
-      "set -o pipefail &&",
-      "xcodebuild",
-      "-project #{project_path.shellescape}",
-      "-scheme #{scheme.shellescape}",
-      "-configuration Release",
-      "-archivePath #{archive_path.shellescape}",
-      "CODE_SIGN_STYLE=Manual",
-      "DEVELOPMENT_TEAM=#{team_id}",
-      "CODE_SIGN_IDENTITY='Apple Distribution'",
-      "PROVISIONING_PROFILE_SPECIFIER='#{profile_name}'",
-      "archive"
-    ].join(" "))
-
-    # 2) Export IPA
-    sh([
-      "set -o pipefail &&",
-      "xcodebuild",
-      "-exportArchive",
-      "-archivePath #{archive_path.shellescape}",
-      "-exportPath #{export_dir.shellescape}",
-      "-exportOptionsPlist #{export_plist.shellescape}"
-    ].join(" "))
-
-    ipa_path = Dir[File.join(export_dir, "*.ipa")].first
-    UI.user_error!("IPA not found in #{export_dir}") if ipa_path.to_s.strip.empty?
+    ipa_path = Dir[File.join("build/export", "*.ipa")].first
+    UI.user_error!("IPA not found in build/export") if ipa_path.to_s.strip.empty?
 
     # 3) Upload to TestFlight
     upload_to_testflight(
