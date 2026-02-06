@@ -40,6 +40,13 @@ jobs:
           cd ios/App
           bundle install
 
+      - name: Sanity check Xcode project
+        run: |
+          cd ios/App
+          ls -la
+          ls -la App.xcodeproj
+          xcodebuild -list -project App.xcodeproj
+
       - name: Deploy to TestFlight
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
