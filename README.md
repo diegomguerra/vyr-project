@@ -4,37 +4,6 @@
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
-## CI secrets for TestFlight (GitHub Actions)
-
-The Deploy to TestFlight workflow expects these secrets:
-
-- `APP_STORE_CONNECT_API_KEY_ID`
-- `APP_STORE_CONNECT_API_ISSUER_ID`
-- `APP_STORE_CONNECT_API_KEY`
-- `APP_STORE_CONNECT_TEAM_ID`
-- `MATCH_PASSWORD`
-- `MATCH_GIT_URL`
-- `MATCH_GIT_BASIC_AUTHORIZATION` (Base64 of `x-access-token:<PAT>` for the Match repo)
-- `MATCH_GIT_BRANCH` (defaults to `master`; set to `main` if your Match repo uses it)
-
-You can generate `MATCH_GIT_BASIC_AUTHORIZATION` like this (do **not** commit the output):
-
-```sh
-printf 'x-access-token:%s' "$PAT" | base64
-```
-
-If your certificates repository uses a branch other than `master`, set the `MATCH_GIT_BRANCH`
-secret accordingly (for example, `main`).
-
-## iOS TestFlight CI notes
-
-- The TestFlight workflow runs entirely on a GitHub Actions **macOS** runner; no local Mac is
-  required to build or upload the iOS app.
-- The workflow expects `npx cap sync ios` to run before Fastlane so Xcode project files stay in
-  sync with the web build.
-- The Fastlane lane uses Match with App Store distribution profiles and injects the correct
-  provisioning profile during archive to avoid "iOS App Development" signing in Release builds.
-
 ## How can I edit this code?
 
 There are several ways of editing your application.

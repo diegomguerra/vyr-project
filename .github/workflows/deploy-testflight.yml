@@ -1,4 +1,6 @@
 # Deploy to TestFlight workflow (v3)
+# Synced from vyr-app - DO NOT edit directly in vyr-project
+# This workflow should ONLY run in vyr-project (has ios/ folder)
 name: Deploy to TestFlight
 
 on:
@@ -8,6 +10,7 @@ on:
 
 jobs:
   build-and-deploy:
+    # CRITICAL: Only run in vyr-project repository (has ios/ folder)
     if: github.repository == 'diegomguerra/vyr-project'
     runs-on: macos-latest
 
@@ -26,6 +29,14 @@ jobs:
       - name: Build web app
         run: npm run build
 
+      - name: Verify frontend build output
+        run: |
+          if [ ! -f "dist/index.html" ]; then
+            echo "❌ ERROR: dist/index.html not found. Frontend build failed."
+            exit 1
+          fi
+          echo "✅ dist/index.html found. Frontend build OK."
+
       - name: Sync Capacitor iOS
         run: npx cap sync ios
 
@@ -35,17 +46,15 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: Install Fastlane deps
+      - name: Install Fastlane
         run: |
           cd ios/App
           bundle install
 
-      - name: Sanity check Xcode project
+      - name: Configure Git credentials for Match
         run: |
-          cd ios/App
-          ls -la
-          ls -la App.xcodeproj
-          xcodebuild -list -project App.xcodeproj
+          git config --global credential.helper store
+          echo "https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com" > ~/.git-credentials
 
       - name: Deploy to TestFlight
         env:
@@ -54,7 +63,6 @@ jobs:
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
-          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
           APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
         run: |
           cd ios/App

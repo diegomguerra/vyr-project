@@ -182,6 +182,13 @@ export default function Settings({ connection, onBack, onReconnect, onDisconnect
           </div>
         </div>
       </section>
+
+      {/* Build Info */}
+      <section className="mt-10 animate-fade-in" style={{ animationDelay: "300ms" }}>
+        <p className="text-vyr-text-muted/40 text-[10px] text-center font-mono tracking-wide">
+          build {__BUILD_SHA__.slice(0, 7)} · {__BUILD_TIME__.split("T")[0]}
+        </p>
+      </section>
     </div>
   );
 }
