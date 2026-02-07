@@ -48,6 +48,14 @@ jobs:
             rsync -av --delete ./ios/App/fastlane/ target/ios/App/fastlane/
           fi
 
+          # Sync Gemfile (Ruby dependencies for Fastlane)
+          if [ -f "./ios/App/Gemfile" ]; then
+            cp -f ./ios/App/Gemfile target/ios/App/Gemfile
+          fi
+          if [ -f "./ios/App/Gemfile.lock" ]; then
+            cp -f ./ios/App/Gemfile.lock target/ios/App/Gemfile.lock
+          fi
+
           cp -f ./index.html target/index.html
           # Merge package.json: source deps + inject Capacitor deps (v8)
           jq -s '
