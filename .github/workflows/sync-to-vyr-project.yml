@@ -42,6 +42,12 @@ jobs:
             rsync -av --delete ./supabase/ target/supabase/
           fi
 
+          # Sync Fastlane config to target (ios/ is not fully synced, but fastlane must stay in sync)
+          if [ -d "./ios/App/fastlane" ]; then
+            mkdir -p target/ios/App/fastlane
+            rsync -av --delete ./ios/App/fastlane/ target/ios/App/fastlane/
+          fi
+
           cp -f ./index.html target/index.html
           # Merge package.json: source deps + inject Capacitor deps (v8)
           jq -s '
