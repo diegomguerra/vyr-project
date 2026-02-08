@@ -22,8 +22,10 @@ platform :ios do
       sh("cd ../.. && npm install && npm run build && npx cap sync ios")
     end
 
-    # Verify frontend build output exists
-    UI.user_error!("dist/index.html not found — frontend build failed or was not run.") unless File.exist?("../../dist/index.html")
+    # Verify frontend build output exists (check Capacitor-synced assets)
+    unless File.exist?("../../dist/index.html") || File.exist?("App/public/index.html")
+      UI.user_error!("Frontend build not found — ensure 'npm run build && npx cap sync ios' ran successfully.")
+    end
 
     # Fetch or create certificates and provisioning profiles
     # In CI, allow creating new certs if they don't exist
