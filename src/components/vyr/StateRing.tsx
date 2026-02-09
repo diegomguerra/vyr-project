@@ -34,11 +34,7 @@ export function StateRing({
   const progress = (value / 100) * arcLength;
   
   // Cor baseada no score
-  const ringColor = useMemo(() => {
-    if (value >= 70) return "hsl(var(--vyr-accent-action))"; // Azul - bom
-    if (value >= 40) return "hsl(var(--vyr-accent-transition))"; // Âmbar - atenção
-    return "hsl(0 84% 60%)"; // Vermelho - baixo
-  }, [value]);
+  const ringColor = "hsl(var(--vyr-accent-action))";
 
   // Animação de contagem do número
   useEffect(() => {
