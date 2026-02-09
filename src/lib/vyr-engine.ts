@@ -15,7 +15,7 @@ import { FALLBACK_BASELINE, normalizeToBaseline, zToPillarDelta } from "./vyr-ba
 // ===== NORMALIZAÇÃO HRV =====
 
 /**
- * Converte HRV bruto em milissegundos (ex: 44ms do J-Style) para índice 0-100.
+ * Converte HRV bruto em milissegundos (ex: 44ms do QRing) para índice 0-100.
  * 
  * Escala baseada em literatura:
  *   <20ms  → 0-15  (muito baixo)

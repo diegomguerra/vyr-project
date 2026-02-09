@@ -254,7 +254,7 @@ export function getTodayContext(): DayContext {
  * Cenários de demonstração
  */
 export const DEMO_SCENARIOS = {
-  // Baseado em dados reais J-Style - dia de alta performance
+  // Baseado em dados reais QRing - dia de alta performance
   highPerformance: {
     wearableData: {
       date: new Date().toISOString().slice(0, 10),
@@ -263,7 +263,7 @@ export const DEMO_SCENARIOS = {
       spo2: 99, bodyTemperature: 36.5,
     },
   },
-  // Baseado em dados reais J-Style - dia de recuperação
+  // Baseado em dados reais QRing - dia de recuperação
   recovery: {
     wearableData: {
       date: new Date().toISOString().slice(0, 10),
@@ -272,8 +272,8 @@ export const DEMO_SCENARIOS = {
       spo2: 96, bodyTemperature: 37.2,
     },
   },
-  // Dados reais capturados do J-Style (09/02/2026)
-  jstyleReal: {
+  // Dados reais capturados do QRing (09/02/2026)
+  qringReal: {
     wearableData: {
       date: "2026-02-09",
       rhr: 74, hrvIndex: 0, hrvRawMs: 44, sleepDuration: 3.88, sleepQuality: 66,

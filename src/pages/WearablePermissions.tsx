@@ -29,6 +29,7 @@ const PROVIDER_NAMES: Record<WearableProvider, string> = {
   circular: "Circular Ring",
   movano: "Movano Evie",
   jstyle: "J-Style Ring",
+  qring: "QRing",
 };
 
 interface Permission {
@@ -192,6 +193,22 @@ const PROVIDER_PERMISSIONS: Record<WearableProvider, Permission[]> = {
     { id: "calories", label: "Calorias estimadas", description: "Gasto calórico aproximado" },
     { id: "spo2", label: "SpO₂ noturno", description: "Modelos específicos" },
     { id: "temp", label: "Temperatura periférica", description: "Variação relativa (alguns modelos)" },
+  ],
+  qring: [
+    { id: "hr_night", label: "FC noturna", description: "Frequência cardíaca durante o sono" },
+    { id: "hr_rest", label: "FC média em repouso", description: "Frequência cardíaca de repouso (mín noturno)" },
+    { id: "hrv", label: "VFC (HRV)", description: "Variabilidade da frequência cardíaca em ms" },
+    { id: "sleep_duration", label: "Duração do sono", description: "Tempo total de sono" },
+    { id: "sleep_stages", label: "Estágios do sono", description: "Leve, profundo, acordado, movimento ocular" },
+    { id: "sleep_efficiency", label: "Eficiência do sono", description: "Percentual de tempo dormindo" },
+    { id: "sleep_timing", label: "Horários de sono", description: "Início e término" },
+    { id: "sleep_frag", label: "Fragmentação", description: "Tempo acordado durante o sono" },
+    { id: "spo2", label: "SpO₂", description: "Oxigênio no sangue contínuo (96-99%)" },
+    { id: "temp", label: "Temperatura corporal", description: "Monitoramento contínuo (35.9-38.0°C)" },
+    { id: "stress", label: "Estresse", description: "Score de pressão/estresse (0-100)" },
+    { id: "steps", label: "Passos", description: "Contagem diária" },
+    { id: "calories", label: "Calorias", description: "Gasto calórico estimado" },
+    { id: "activity", label: "Atividade", description: "Pontuação e quilometragem" },
   ],
   oura: [
     { id: "hr_night", label: "FC noturna", description: "Frequência cardíaca durante o sono" },

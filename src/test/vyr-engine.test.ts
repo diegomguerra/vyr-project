@@ -10,7 +10,7 @@ describe("normalizeHrvMsToIndex", () => {
   });
 
   it("maps mid HRV ms to mid index", () => {
-    const idx = normalizeHrvMsToIndex(44); // J-Style real value
+    const idx = normalizeHrvMsToIndex(44); // QRing real value
     expect(idx).toBeGreaterThanOrEqual(30);
     expect(idx).toBeLessThanOrEqual(70);
   });
@@ -42,9 +42,9 @@ describe("validateWearableData", () => {
   });
 });
 
-describe("computeState with J-Style real data", () => {
-  it("produces valid score for jstyleReal scenario", () => {
-    const { wearableData } = DEMO_SCENARIOS.jstyleReal;
+describe("computeState with QRing real data", () => {
+  it("produces valid score for qringReal scenario", () => {
+    const { wearableData } = DEMO_SCENARIOS.qringReal;
     const state = computeState(wearableData as WearableData);
     
     expect(state.vyrScore).toBeGreaterThanOrEqual(0);
@@ -67,7 +67,7 @@ describe("computeState with J-Style real data", () => {
   });
 
   it("uses hrvRawMs when hrvIndex is 0", () => {
-    const data = DEMO_SCENARIOS.jstyleReal.wearableData as WearableData;
+    const data = DEMO_SCENARIOS.qringReal.wearableData as WearableData;
     expect(data.hrvIndex).toBe(0);
     expect(data.hrvRawMs).toBe(44);
     

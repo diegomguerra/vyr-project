@@ -106,6 +106,12 @@ const RING_PROVIDERS: WearableProviderInfo[] = [
     description: "Temperatura, sono, foco em saúde feminina",
   },
   {
+    id: "qring",
+    name: "QRing",
+    icon: "circle",
+    description: "FC, HRV, SpO2, temperatura, sono, estresse",
+  },
+  {
     id: "jstyle",
     name: "J-Style Ring",
     icon: "circle",

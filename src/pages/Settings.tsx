@@ -30,6 +30,7 @@ const PROVIDER_NAMES: Record<WearableProvider, string> = {
   circular: "Circular Ring",
   movano: "Movano Evie",
   jstyle: "J-Style Ring",
+  qring: "QRing",
 };
 
 function formatLastSync(date: Date | null): string {

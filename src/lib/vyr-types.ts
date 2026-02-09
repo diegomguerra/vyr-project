@@ -99,7 +99,7 @@ export interface WearableData {
   stressScore: number;            // 0-100
   spo2?: number;                  // 90-100% (saturação de oxigênio)
   bodyTemperature?: number;       // 35.0-39.0 °C
-  hrvRawMs?: number;              // HRV bruto em milissegundos (ex: 44ms do J-Style)
+  hrvRawMs?: number;              // HRV bruto em milissegundos (ex: 44ms do QRing)
 }
 
 // Estado computado pela VYR Engine
@@ -191,7 +191,8 @@ export type WearableProvider =
   | "ultrahuman"
   | "circular"
   | "movano"
-  | "jstyle";
+  | "jstyle"
+  | "qring";
 
 export type SyncStatus = "synced" | "pending" | "error";
 
