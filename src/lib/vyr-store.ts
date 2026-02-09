@@ -1,5 +1,6 @@
-// VYR Labs - Mock Store (integrado com Engine v3)
+// VYR Labs - Mock Store (integrado com Engine v4)
 // Usa dados simulados de wearable para gerar estado
+// Agora com baseline pessoal e contexto temporal
 
 import { useState, useCallback, useMemo } from "react";
 import type { 
@@ -15,7 +16,8 @@ import type {
   WearableConnection,
   WearableProvider,
 } from "./vyr-types";
-import { computeState } from "./vyr-engine";
+import { computeState, getRecommendedAction } from "./vyr-engine";
+import { computeBaselineFromHistory } from "./vyr-baseline";
 import { 
   generateSystemReading, 
   generatePillarDescriptions, 
@@ -134,7 +136,7 @@ export const ACTION_COPY: Record<MomentAction, {
 
 // Hook para gerenciar o store com engine integrada
 export function useVYRStore() {
-  // Gera histórico de 30 dias
+  // Gera histórico de 30 dias (já usa baseline internamente)
   const history = useMemo(() => generate30DayHistory(), []);
   
   // Contexto do dia atual
@@ -145,8 +147,8 @@ export function useVYRStore() {
     todayContext.computedState.recommendedAction
   );
   
-  // Horas desde última ação (para transições)
-  const [hoursSinceLastAction, setHoursSinceLastAction] = useState(0);
+  // Sachets tomados hoje (para contexto temporal)
+  const [sachetsTakenToday, setSachetsTakenToday] = useState<MomentAction[]>([]);
   
   // Checkpoints
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>(todayContext.checkpoints);
@@ -186,11 +188,11 @@ export function useVYRStore() {
     [todayContext]
   );
   
-  // Transição sugerida
-  const suggestedTransition = useMemo(() => 
-    generateSuggestedTransition(currentAction, todayContext.computedState, hoursSinceLastAction),
-    [currentAction, todayContext, hoursSinceLastAction]
-  );
+  // Transição sugerida (usa sachets tomados como proxy de tempo)
+  const suggestedTransition = useMemo(() => {
+    const hoursSince = sachetsTakenToday.length > 0 ? 3 : 0;
+    return generateSuggestedTransition(currentAction, todayContext.computedState, hoursSince);
+  }, [currentAction, todayContext, sachetsTakenToday]);
   
   // Padrões detectados
   const detectedPatterns = useMemo(() => 
@@ -215,6 +217,9 @@ export function useVYRStore() {
     };
     setActionLogs((prev) => [newLog, ...prev]);
 
+    // Registra sachê tomado
+    setSachetsTakenToday((prev) => [...prev, action]);
+
     // Mostra confirmação
     setSachetConfirmation({
       action,
@@ -222,15 +227,16 @@ export function useVYRStore() {
       nextReadingIn: action === "BOOT" ? "2-3 horas" : action === "HOLD" ? "3-4 horas" : "amanhã",
     });
 
-    // Atualiza próxima ação
-    const nextAction: MomentAction = 
-      action === "BOOT" ? "HOLD" : 
-      action === "HOLD" ? "CLEAR" : 
-      "BOOT";
+    // Próxima ação usa o engine com contexto atualizado
+    const updatedSachets = [...sachetsTakenToday, action];
+    const nextAction = getRecommendedAction(
+      todayContext.computedState.pillars,
+      todayContext.computedState.vyrScore,
+      { hourOfDay: new Date().getHours(), sachetsTakenToday: updatedSachets }
+    );
     
     setCurrentAction(nextAction);
-    setHoursSinceLastAction(0);
-  }, []);
+  }, [sachetsTakenToday, todayContext]);
 
   const dismissConfirmation = useCallback(() => {
     setSachetConfirmation(null);

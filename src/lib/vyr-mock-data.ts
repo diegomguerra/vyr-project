@@ -1,9 +1,10 @@
 // VYR Labs - Mock Data
 // Simulação de 30 dias realistas de uso com wearable
-// Estes dados simulam a integração com pulseira inteligente
+// Agora com baseline pessoal e contexto temporal
 
 import type { WearableData, DayContext, Checkpoint, MomentAction } from "./vyr-types";
 import { computeState } from "./vyr-engine";
+import { computeBaselineFromHistory } from "./vyr-baseline";
 import {
   generatePhysiologicalContext,
   generateCognitiveWindow,
@@ -30,7 +31,6 @@ function generateWearableData(
   const dayOfWeek = date.getDay();
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
   
-  // Base patterns
   let baseRhr = 60 + random() * 10;
   let baseSleepDuration = 6.5 + random() * 1.5;
   let baseSleepQuality = 65 + random() * 25;
@@ -39,42 +39,28 @@ function generateWearableData(
   let baseStress = 30 + random() * 30;
   let baseAwakenings = Math.floor(2 + random() * 4);
 
-  // Weekend effects
   if (isWeekend) {
-    baseRegularity += 30 + random() * 30; // Mais irregular
-    baseSleepDuration += random() * 1; // Dorme um pouco mais
-    baseStress -= 10; // Menos stress
+    baseRegularity += 30 + random() * 30;
+    baseSleepDuration += random() * 1;
+    baseStress -= 10;
   }
 
-  // Post high-activity effects
   if (previousActivity === "high") {
     baseRhr += 5;
     baseHrv -= 10;
     baseStress += 10;
   }
 
-  // Variações ao longo dos 30 dias (tendência de melhora com protocolo)
-  if (dayIndex > 7) {
-    baseHrv += 3; // HRV melhora levemente
-    baseSleepQuality += 2;
-  }
-  if (dayIndex > 14) {
-    baseHrv += 3;
-    baseSleepQuality += 3;
-    baseRegularity = baseRegularity * 0.8; // Mais regular
-  }
-  if (dayIndex > 21) {
-    baseHrv += 2;
-    baseSleepQuality += 2;
-    baseRhr -= 2; // Coração mais eficiente
-  }
+  // Tendência de melhora com protocolo
+  if (dayIndex > 7) { baseHrv += 3; baseSleepQuality += 2; }
+  if (dayIndex > 14) { baseHrv += 3; baseSleepQuality += 3; baseRegularity *= 0.8; }
+  if (dayIndex > 21) { baseHrv += 2; baseSleepQuality += 2; baseRhr -= 2; }
 
-  // Determine activity level for tomorrow
   let activity: "low" | "medium" | "high" = "medium";
   const activityRoll = random();
   if (activityRoll < 0.2) activity = "low";
   else if (activityRoll > 0.7) activity = "high";
-  if (isWeekend && activityRoll > 0.5) activity = "high"; // Mais ativo no fim de semana
+  if (isWeekend && activityRoll > 0.5) activity = "high";
 
   return {
     date: date.toISOString().slice(0, 10),
@@ -95,18 +81,16 @@ function generateWearableData(
 function determineSachetsUsed(action: MomentAction, random: () => number): MomentAction[] {
   if (action === "BOOT") {
     const r = random();
-    if (r > 0.3) return ["BOOT", "HOLD", "CLEAR"]; // Ciclo completo
-    if (r > 0.1) return ["BOOT", "HOLD"]; // Ciclo parcial
-    return ["BOOT"]; // Só ativação
+    if (r > 0.3) return ["BOOT", "HOLD", "CLEAR"];
+    if (r > 0.1) return ["BOOT", "HOLD"];
+    return ["BOOT"];
   }
-  
   if (action === "HOLD") {
     const r = random();
     if (r > 0.4) return ["HOLD", "CLEAR"];
     return ["HOLD"];
   }
-  
-  return ["CLEAR"]; // Só recuperação
+  return ["CLEAR"];
 }
 
 /**
@@ -114,12 +98,11 @@ function determineSachetsUsed(action: MomentAction, random: () => number): Momen
  */
 function generateCheckpoints(
   date: Date,
-  sachets: MomentAction[],
+  _sachets: MomentAction[],
   random: () => number
 ): Checkpoint[] {
   const checkpoints: Checkpoint[] = [];
   
-  // 30% de chance de ter um checkpoint
   if (random() > 0.7) {
     const notes = [
       "Manhã com clareza elevada",
@@ -128,12 +111,12 @@ function generateCheckpoints(
       "Boa recuperação após pausa",
       "Dia produtivo",
       "Dificuldade de concentração",
-      null, // Sem nota
+      null,
     ];
     
     checkpoints.push({
       id: `cp-${date.getTime()}-${random()}`,
-      timestamp: new Date(date.getTime() + 10 * 60 * 60 * 1000), // 10h
+      timestamp: new Date(date.getTime() + 10 * 60 * 60 * 1000),
       note: notes[Math.floor(random() * notes.length)] || undefined,
     });
   }
@@ -142,39 +125,65 @@ function generateCheckpoints(
 }
 
 /**
- * Gera 30 dias de dados simulados
+ * Gera hora simulada do dia para cada dia do histórico
+ */
+function getSimulatedHour(dayIndex: number, random: () => number): number {
+  // Dia atual: hora real; dias anteriores: hora aleatória entre 7-10
+  if (dayIndex === 0) return new Date().getHours();
+  return 7 + Math.floor(random() * 3);
+}
+
+/**
+ * Gera 30 dias de dados simulados com baseline pessoal
  */
 export function generate30DayHistory(startDate: Date = new Date()): DayContext[] {
-  const random = seededRandom(42); // Seed fixo para reproducibilidade
+  const random = seededRandom(42);
   const history: DayContext[] = [];
   
   let previousActivity: "low" | "medium" | "high" = "medium";
   let currentAction: MomentAction = "BOOT";
   
+  // === FASE 1: Gera todos os wearable data primeiro ===
+  const allWearableData: WearableData[] = [];
+  const randomPhase1 = seededRandom(42);
+  let prevAct: "low" | "medium" | "high" = "medium";
+  
   for (let i = 0; i < 30; i++) {
     const date = new Date(startDate);
     date.setDate(date.getDate() - i);
+    const wd = generateWearableData(date, i, prevAct, randomPhase1);
+    allWearableData.push(wd);
+    prevAct = wd.previousDayActivity;
+  }
+
+  // === FASE 2: Computa baseline pessoal dos últimos 14 dias ===
+  // Usa os dias mais antigos como histórico (inverso cronológico)
+  const historicalData = [...allWearableData].reverse();
+  const baseline = computeBaselineFromHistory(historicalData);
+
+  // === FASE 3: Gera contextos com baseline ===
+  // Reset random para fase de sachets/checkpoints
+  const randomPhase2 = seededRandom(99);
+  
+  for (let i = 0; i < 30; i++) {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() - i);
+    const wearableData = allWearableData[i];
     
-    // Gera dados do wearable
-    const wearableData = generateWearableData(date, i, previousActivity, random);
+    // Hora simulada do dia
+    const hourOfDay = getSimulatedHour(i, randomPhase2);
     
-    // Computa estado
-    const computedState = computeState(wearableData);
+    // Computa estado com baseline pessoal e contexto temporal
+    const computedState = computeState(wearableData, baseline, {
+      hourOfDay,
+      sachetsTakenToday: [], // Primeiro cálculo sem sachets
+    });
     
-    // Gera contexto fisiológico
     const physiologicalContext = generatePhysiologicalContext(wearableData);
-    
-    // Gera janela cognitiva
     const cognitiveWindow = generateCognitiveWindow(computedState);
-    
-    // Gera transição sugerida (usando 4h como tempo padrão)
     const suggestedTransition = generateSuggestedTransition(currentAction, computedState, 4);
-    
-    // Determina sachês usados
-    const sachetsUsed = determineSachetsUsed(computedState.recommendedAction, random);
-    
-    // Gera checkpoints
-    const checkpoints = generateCheckpoints(date, sachetsUsed, random);
+    const sachetsUsed = determineSachetsUsed(computedState.recommendedAction, randomPhase2);
+    const checkpoints = generateCheckpoints(date, sachetsUsed, randomPhase2);
     
     history.push({
       date: wearableData.date,
@@ -187,7 +196,6 @@ export function generate30DayHistory(startDate: Date = new Date()): DayContext[]
       checkpoints,
     });
     
-    // Atualiza para próximo dia
     previousActivity = wearableData.previousDayActivity;
     currentAction = computedState.recommendedAction;
   }
@@ -200,11 +208,8 @@ export function generate30DayHistory(startDate: Date = new Date()): DayContext[]
  */
 export function toHistoryDay(context: DayContext) {
   const { date, computedState } = context;
-  
-  // Mapeia estado para descrição dominante
   const dominantState = computedState.stateLabel.toLowerCase();
   
-  // Gera nota do sistema baseada no score
   let systemNote: string;
   if (computedState.vyrScore >= 80) {
     systemNote = "dia favorável, boa capacidade cognitiva";
@@ -216,12 +221,7 @@ export function toHistoryDay(context: DayContext) {
     systemNote = "dia de recuperação necessária";
   }
   
-  return {
-    date,
-    score: computedState.vyrScore,
-    dominantState,
-    systemNote,
-  };
+  return { date, score: computedState.vyrScore, dominantState, systemNote };
 }
 
 /**
@@ -241,52 +241,28 @@ export function getTodayContext(): DayContext {
 }
 
 /**
- * Retorna dados específicos para demonstração
- * Cenários predefinidos para mostrar diferentes estados
+ * Cenários de demonstração
  */
 export const DEMO_SCENARIOS = {
-  // Dia de alta performance (Quinta do plano)
   highPerformance: {
     wearableData: {
       date: new Date().toISOString().slice(0, 10),
-      rhr: 56,
-      hrvIndex: 75,
-      sleepDuration: 7.8,
-      sleepQuality: 88,
-      sleepRegularity: -5,
-      awakenings: 1,
-      previousDayActivity: "low" as const,
-      stressScore: 25,
+      rhr: 56, hrvIndex: 75, sleepDuration: 7.8, sleepQuality: 88,
+      sleepRegularity: -5, awakenings: 1, previousDayActivity: "low" as const, stressScore: 25,
     },
   },
-  
-  // Dia de recuperação (Sábado do plano)
   recovery: {
     wearableData: {
       date: new Date().toISOString().slice(0, 10),
-      rhr: 68,
-      hrvIndex: 42,
-      sleepDuration: 5.2,
-      sleepQuality: 55,
-      sleepRegularity: 90,
-      awakenings: 6,
-      previousDayActivity: "high" as const,
-      stressScore: 58,
+      rhr: 68, hrvIndex: 42, sleepDuration: 5.2, sleepQuality: 55,
+      sleepRegularity: 90, awakenings: 6, previousDayActivity: "high" as const, stressScore: 58,
     },
   },
-  
-  // Início do protocolo (Segunda do plano)
   protocolStart: {
     wearableData: {
       date: new Date().toISOString().slice(0, 10),
-      rhr: 62,
-      hrvIndex: 58,
-      sleepDuration: 6.5,
-      sleepQuality: 72,
-      sleepRegularity: 15,
-      awakenings: 3,
-      previousDayActivity: "medium" as const,
-      stressScore: 42,
+      rhr: 62, hrvIndex: 58, sleepDuration: 6.5, sleepQuality: 72,
+      sleepRegularity: 15, awakenings: 3, previousDayActivity: "medium" as const, stressScore: 42,
     },
   },
 };

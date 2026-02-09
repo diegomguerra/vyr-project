@@ -207,6 +207,13 @@ export interface WearableProviderInfo {
   description: string;
 }
 
+// ===== CONTEXTO DE AÇÃO =====
+
+export interface ActionContext {
+  hourOfDay?: number;              // 0-23
+  sachetsTakenToday?: MomentAction[];
+}
+
 // ===== STORE TYPES =====
 
 export interface VYRStore {
