@@ -33,9 +33,9 @@ jobs:
           rsync -av --delete --exclude ".git/" ./src/ target/src/
           rsync -av --delete --exclude ".git/" ./public/ target/public/
           
-          # Sync workflows (without --delete to preserve target-only workflows)
+          # Sync workflows (--delete removes obsolete workflows from target)
           mkdir -p target/.github/workflows
-          rsync -av ./.github/workflows/ target/.github/workflows/
+          rsync -av --delete ./.github/workflows/ target/.github/workflows/
 
           if [ -d "./supabase" ]; then
             mkdir -p target/supabase
