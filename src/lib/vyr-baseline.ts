@@ -19,7 +19,9 @@ export interface PersonalBaseline {
   sleepRegularity: BaselineMetric;
   awakenings: BaselineMetric;
   stressScore: BaselineMetric;
-  daysUsed: number; // quantos dias compõem o baseline
+  spo2: BaselineMetric;
+  bodyTemperature: BaselineMetric;
+  daysUsed: number;
 }
 
 // ===== FALLBACK BASELINE =====
@@ -33,6 +35,8 @@ export const FALLBACK_BASELINE: PersonalBaseline = {
   sleepRegularity: { mean: 0, std: 20 },
   awakenings: { mean: 3, std: 1.5 },
   stressScore: { mean: 40, std: 12 },
+  spo2: { mean: 97, std: 1.2 },
+  bodyTemperature: { mean: 36.8, std: 0.3 },
   daysUsed: 0,
 };
 
@@ -86,6 +90,14 @@ export function computeBaselineFromHistory(
     ),
     awakenings: computeMetric(recent.map((d) => d.awakenings), FALLBACK_BASELINE.awakenings),
     stressScore: computeMetric(recent.map((d) => d.stressScore), FALLBACK_BASELINE.stressScore),
+    spo2: computeMetric(
+      recent.filter((d) => d.spo2 != null).map((d) => d.spo2!),
+      FALLBACK_BASELINE.spo2
+    ),
+    bodyTemperature: computeMetric(
+      recent.filter((d) => d.bodyTemperature != null).map((d) => d.bodyTemperature!),
+      FALLBACK_BASELINE.bodyTemperature
+    ),
     daysUsed: recent.length,
   };
 }

@@ -12,11 +12,45 @@ import type {
 import type { PersonalBaseline } from "./vyr-baseline";
 import { FALLBACK_BASELINE, normalizeToBaseline, zToPillarDelta } from "./vyr-baseline";
 
+// ===== NORMALIZAÇÃO HRV =====
+
+/**
+ * Converte HRV bruto em milissegundos (ex: 44ms do J-Style) para índice 0-100.
+ * 
+ * Escala baseada em literatura:
+ *   <20ms  → 0-15  (muito baixo)
+ *   20-40  → 15-40 (baixo)
+ *   40-60  → 40-60 (normal)
+ *   60-100 → 60-80 (bom)
+ *   >100   → 80-100 (excelente)
+ * 
+ * Fórmula: mapeamento logarítmico suavizado
+ */
+export function normalizeHrvMsToIndex(hrvMs: number): number {
+  const clamped = clamp(hrvMs, 5, 200);
+  // Log mapping: ln(5)=1.6, ln(50)=3.9, ln(200)=5.3
+  const normalized = (Math.log(clamped) - Math.log(5)) / (Math.log(200) - Math.log(5));
+  return Math.round(clamp(normalized * 100, 0, 100));
+}
+
+/**
+ * Prepara WearableData normalizando hrvRawMs → hrvIndex se necessário
+ */
+export function normalizeWearableInput(data: WearableData): WearableData {
+  let hrvIndex = data.hrvIndex;
+  
+  // Se temos HRV bruto em ms e o index não foi definido ou é zero
+  if (data.hrvRawMs != null && data.hrvRawMs > 0 && (!hrvIndex || hrvIndex === 0)) {
+    hrvIndex = normalizeHrvMsToIndex(data.hrvRawMs);
+  }
+  
+  return { ...data, hrvIndex };
+}
+
 // ===== VALIDAÇÃO =====
 
 /**
  * Sanitiza dados do wearable, clampando valores para ranges fisiologicamente possíveis.
- * Dados fora de range são silenciosamente corrigidos.
  */
 export function validateWearableData(data: WearableData): WearableData {
   return {
@@ -28,6 +62,8 @@ export function validateWearableData(data: WearableData): WearableData {
     sleepRegularity: clamp(data.sleepRegularity, -120, 120),
     awakenings: clamp(data.awakenings, 0, 30),
     stressScore: clamp(data.stressScore, 0, 100),
+    spo2: data.spo2 != null ? clamp(data.spo2, 70, 100) : undefined,
+    bodyTemperature: data.bodyTemperature != null ? clamp(data.bodyTemperature, 34, 42) : undefined,
   };
 }
 
@@ -69,6 +105,12 @@ export function computeEnergia(data: WearableData, baseline?: PersonalBaseline):
   // Atividade alta ontem = penalização fixa (não é relativa)
   if (data.previousDayActivity === "high") base -= 0.5;
   else if (data.previousDayActivity === "low") base += 0.25;
+
+  // SpO2: abaixo do baseline = oxigenação comprometida = menos energia
+  if (data.spo2 != null) {
+    const spo2Z = normalizeToBaseline(data.spo2, bl.spo2);
+    base += zToPillarDelta(spo2Z) * 0.4; // peso moderado
+  }
 
   return round1(clamp(base, 1, 5));
 }
@@ -118,6 +160,13 @@ export function computeEstabilidade(data: WearableData, baseline?: PersonalBasel
   // Stress: abaixo da média = melhor (invertido)
   const stressZ = normalizeToBaseline(data.stressScore, bl.stressScore);
   base += zToPillarDelta(-stressZ) * 0.7;
+
+  // Temperatura: desvio da média pessoal indica alteração fisiológica
+  // Tanto acima quanto abaixo do normal = instabilidade
+  if (data.bodyTemperature != null) {
+    const tempZ = normalizeToBaseline(data.bodyTemperature, bl.bodyTemperature);
+    base -= Math.abs(zToPillarDelta(tempZ)) * 0.3; // penaliza desvio em qualquer direção
+  }
 
   return round1(clamp(base, 1, 5));
 }
@@ -314,8 +363,9 @@ export function computeState(
   baseline?: PersonalBaseline,
   actionContext?: ActionContext
 ): ComputedState {
-  // Valida entrada
-  const validData = validateWearableData(data);
+  // Normaliza HRV ms → index se necessário, depois valida
+  const normalizedData = normalizeWearableInput(data);
+  const validData = validateWearableData(normalizedData);
 
   // Calcula pilares com baseline pessoal
   const pillars: VYRPillars = {

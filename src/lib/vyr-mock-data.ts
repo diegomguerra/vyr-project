@@ -62,16 +62,26 @@ function generateWearableData(
   else if (activityRoll > 0.7) activity = "high";
   if (isWeekend && activityRoll > 0.5) activity = "high";
 
+  // SpO2 e temperatura (simulados com variação realística)
+  const baseSpo2 = 96 + random() * 3; // 96-99%
+  const baseTemp = 36.3 + random() * 0.8; // 36.3-37.1°C
+  // Sono ruim → SpO2 pode cair, stress alto → temp pode subir
+  const spo2Adj = baseSleepQuality < 60 ? -1 : 0;
+  const tempAdj = baseStress > 55 ? 0.3 : 0;
+
   return {
     date: date.toISOString().slice(0, 10),
     rhr: Math.round(Math.max(52, Math.min(78, baseRhr))),
-    hrvIndex: Math.round(Math.max(25, Math.min(90, baseHrv))),
+    hrvIndex: 0, // será calculado a partir de hrvRawMs
+    hrvRawMs: Math.round(Math.max(20, Math.min(120, baseHrv * 0.8))), // converte para ms realístico
     sleepDuration: Math.round(Math.max(4, Math.min(9, baseSleepDuration)) * 10) / 10,
     sleepQuality: Math.round(Math.max(35, Math.min(95, baseSleepQuality))),
     sleepRegularity: Math.round(Math.max(-90, Math.min(90, baseRegularity))),
     awakenings: Math.max(0, Math.min(10, baseAwakenings)),
     previousDayActivity: previousActivity,
     stressScore: Math.round(Math.max(15, Math.min(80, baseStress))),
+    spo2: Math.round(Math.max(90, Math.min(100, baseSpo2 + spo2Adj))),
+    bodyTemperature: Math.round(Math.max(35.5, Math.min(38.5, baseTemp + tempAdj)) * 10) / 10,
   };
 }
 
@@ -244,25 +254,39 @@ export function getTodayContext(): DayContext {
  * Cenários de demonstração
  */
 export const DEMO_SCENARIOS = {
+  // Baseado em dados reais J-Style - dia de alta performance
   highPerformance: {
     wearableData: {
       date: new Date().toISOString().slice(0, 10),
-      rhr: 56, hrvIndex: 75, sleepDuration: 7.8, sleepQuality: 88,
+      rhr: 56, hrvIndex: 0, hrvRawMs: 65, sleepDuration: 7.8, sleepQuality: 88,
       sleepRegularity: -5, awakenings: 1, previousDayActivity: "low" as const, stressScore: 25,
+      spo2: 99, bodyTemperature: 36.5,
     },
   },
+  // Baseado em dados reais J-Style - dia de recuperação
   recovery: {
     wearableData: {
       date: new Date().toISOString().slice(0, 10),
-      rhr: 68, hrvIndex: 42, sleepDuration: 5.2, sleepQuality: 55,
+      rhr: 68, hrvIndex: 0, hrvRawMs: 36, sleepDuration: 5.2, sleepQuality: 55,
       sleepRegularity: 90, awakenings: 6, previousDayActivity: "high" as const, stressScore: 58,
+      spo2: 96, bodyTemperature: 37.2,
+    },
+  },
+  // Dados reais capturados do J-Style (09/02/2026)
+  jstyleReal: {
+    wearableData: {
+      date: "2026-02-09",
+      rhr: 74, hrvIndex: 0, hrvRawMs: 44, sleepDuration: 3.88, sleepQuality: 66,
+      sleepRegularity: 0, awakenings: 3, previousDayActivity: "low" as const, stressScore: 46,
+      spo2: 98, bodyTemperature: 36.5,
     },
   },
   protocolStart: {
     wearableData: {
       date: new Date().toISOString().slice(0, 10),
-      rhr: 62, hrvIndex: 58, sleepDuration: 6.5, sleepQuality: 72,
+      rhr: 62, hrvIndex: 0, hrvRawMs: 50, sleepDuration: 6.5, sleepQuality: 72,
       sleepRegularity: 15, awakenings: 3, previousDayActivity: "medium" as const, stressScore: 42,
+      spo2: 97, bodyTemperature: 36.8,
     },
   },
 };

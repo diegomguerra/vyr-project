@@ -89,14 +89,17 @@ export interface ActionLog {
 // Dados crus da pulseira (NUNCA exibidos ao usuário)
 export interface WearableData {
   date: string;
-  rhr: number;                    // 55-80 bpm típico
-  hrvIndex: number;               // 0-100 (normalizado)
+  rhr: number;                    // 55-80 bpm típico (usar mínimo noturno)
+  hrvIndex: number;               // 0-100 (normalizado internamente)
   sleepDuration: number;          // em horas decimais
   sleepQuality: number;           // 0-100
   sleepRegularity: number;        // -60 a +60 min vs média
   awakenings: number;             // 0-10+
   previousDayActivity: ActivityLevel;
   stressScore: number;            // 0-100
+  spo2?: number;                  // 90-100% (saturação de oxigênio)
+  bodyTemperature?: number;       // 35.0-39.0 °C
+  hrvRawMs?: number;              // HRV bruto em milissegundos (ex: 44ms do J-Style)
 }
 
 // Estado computado pela VYR Engine
