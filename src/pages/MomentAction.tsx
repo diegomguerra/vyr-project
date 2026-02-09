@@ -1,7 +1,7 @@
 // VYR Labs - Tela de Ação (Visual Whoop-inspired)
 // Explicação rica + Ícone de status + Botão de ação
 
-import { ChevronLeft, Play, Pause, Moon } from "lucide-react";
+import { ChevronLeft, Play } from "lucide-react";
 import { ActionButton } from "@/components/vyr";
 import type { MomentAction } from "@/lib/vyr-types";
 import { ACTION_COPY } from "@/lib/vyr-store";
@@ -14,8 +14,8 @@ interface MomentActionProps {
 
 const ACTION_ICONS: Record<MomentAction, typeof Play> = {
   BOOT: Play,
-  HOLD: Pause,
-  CLEAR: Moon,
+  HOLD: Play,
+  CLEAR: Play,
 };
 
 const ACTION_COLORS: Record<MomentAction, string> = {

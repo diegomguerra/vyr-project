@@ -1,7 +1,7 @@
 // VYR Labs - Card de Transição Sugerida
 // O sistema indica quando mudar de fase (BOOT → HOLD → CLEAR)
 
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, Play } from "lucide-react";
 import type { SuggestedTransition, MomentAction } from "@/lib/vyr-types";
 
 interface TransitionCardProps {
@@ -50,9 +50,10 @@ export function TransitionCard({ transition, onActivate, onViewDetails }: Transi
         )}
         <button
           onClick={() => onActivate(transition.targetAction)}
-          className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-vyr-accent-action transition-opacity active:opacity-80"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-vyr-accent-action transition-opacity active:opacity-80"
         >
-          Ativar {ACTION_LABELS[transition.targetAction]}
+          <Play className="w-4 h-4" fill="currentColor" />
+          Iniciar {ACTION_LABELS[transition.targetAction]}
         </button>
       </div>
     </div>

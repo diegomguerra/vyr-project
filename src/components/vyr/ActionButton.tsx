@@ -1,7 +1,7 @@
 // VYR Labs - Action Button
 // Botão principal de ação com ícone e glow
 
-import { Play, Pause, Moon } from "lucide-react";
+import { Play } from "lucide-react";
 import type { MomentAction } from "@/lib/vyr-types";
 
 interface ActionButtonProps {
@@ -15,12 +15,6 @@ interface ActionButtonProps {
   disabled?: boolean;
 }
 
-const ACTION_ICONS: Record<MomentAction, typeof Play> = {
-  BOOT: Play,
-  HOLD: Pause,
-  CLEAR: Moon,
-};
-
 const ACTION_COLORS: Record<MomentAction, string> = {
   BOOT: "bg-vyr-accent-action hover:bg-vyr-accent-action/90",
   HOLD: "bg-vyr-accent-transition hover:bg-vyr-accent-transition/90",
@@ -33,7 +27,7 @@ export function ActionButton({
   onTap,
   disabled = false 
 }: ActionButtonProps) {
-  const Icon = ACTION_ICONS[action];
+  const Icon = Play;
   const colorClass = ACTION_COLORS[action];
 
   return (
