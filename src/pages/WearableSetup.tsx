@@ -76,6 +76,12 @@ const WATCH_PROVIDERS: WearableProviderInfo[] = [
 // Smart Rings
 const RING_PROVIDERS: WearableProviderInfo[] = [
   {
+    id: "qring",
+    name: "QRing",
+    icon: "circle",
+    description: "FC, HRV, SpO2, temperatura, sono, estresse",
+  },
+  {
     id: "oura",
     name: "Oura Ring",
     icon: "circle",
@@ -104,12 +110,6 @@ const RING_PROVIDERS: WearableProviderInfo[] = [
     name: "Movano Evie Ring",
     icon: "circle",
     description: "Temperatura, sono, foco em saúde feminina",
-  },
-  {
-    id: "qring",
-    name: "QRing",
-    icon: "circle",
-    description: "FC, HRV, SpO2, temperatura, sono, estresse",
   },
   {
     id: "jstyle",
