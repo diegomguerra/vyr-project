@@ -2,6 +2,7 @@
 // Exibe o VYR State com anel de 270° e glow + draw animation
 
 import { useMemo, useEffect, useState } from "react";
+import { getStateLevel } from "@/lib/vyr-engine";
 
 interface StateRingProps {
   /** Score de 0-100 */
@@ -124,8 +125,11 @@ export function StateRing({
         <span className="text-6xl font-medium text-vyr-text-primary leading-none tabular-nums">
           {displayValue}
         </span>
-        <span className="text-vyr-text-secondary text-sm mt-2">
+        <span className="text-vyr-text-secondary text-sm mt-1">
           {stateLabel}
+        </span>
+        <span className="text-vyr-text-muted text-[10px] tracking-wider uppercase mt-0.5">
+          {getStateLevel(value).label}
         </span>
       </div>
     </button>

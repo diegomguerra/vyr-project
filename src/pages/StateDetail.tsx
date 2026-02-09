@@ -4,6 +4,7 @@
 import { ChevronLeft } from "lucide-react";
 import { StateRing, PillarRing, InsightCard } from "@/components/vyr";
 import type { VYRState } from "@/lib/vyr-types";
+import { getStateLevel } from "@/lib/vyr-engine";
 
 interface StateDetailProps {
   state: VYRState;
@@ -48,6 +49,8 @@ function PillarDetail({
 }
 
 export default function StateDetail({ state, onBack }: StateDetailProps) {
+  const levelInfo = getStateLevel(state.vyrStateScore);
+
   return (
     <div className="min-h-screen bg-vyr-bg-primary px-5 py-4 pb-28">
       {/* Header */}
@@ -59,9 +62,14 @@ export default function StateDetail({ state, onBack }: StateDetailProps) {
         >
           <ChevronLeft className="w-6 h-6 text-vyr-text-secondary" />
         </button>
-        <h1 className="text-vyr-text-primary text-lg font-medium">
-          Estado atual
-        </h1>
+        <div>
+          <h1 className="text-vyr-text-primary text-lg font-medium">
+            Estado atual
+          </h1>
+          <span className="text-vyr-text-muted text-xs tracking-wider uppercase">
+            Nível: {levelInfo.label}
+          </span>
+        </div>
       </div>
 
       {/* Ring Central */}
