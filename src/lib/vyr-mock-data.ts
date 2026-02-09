@@ -189,7 +189,7 @@ export function generate30DayHistory(startDate: Date = new Date()): DayContext[]
       sachetsTakenToday: [], // Primeiro cálculo sem sachets
     });
     
-    const physiologicalContext = generatePhysiologicalContext(wearableData);
+    const physiologicalContext = generatePhysiologicalContext(wearableData, computedState);
     const cognitiveWindow = generateCognitiveWindow(computedState);
     const suggestedTransition = generateSuggestedTransition(currentAction, computedState, 4);
     const sachetsUsed = determineSachetsUsed(computedState.recommendedAction, randomPhase2);

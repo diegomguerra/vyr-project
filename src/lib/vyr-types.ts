@@ -4,6 +4,7 @@ export type MomentAction = "BOOT" | "HOLD" | "CLEAR";
 export type ActivityLevel = "low" | "medium" | "high";
 export type PillarType = "energia" | "clareza" | "estabilidade";
 export type ContextStatus = "favorable" | "attention" | "limiting";
+export type StateLevel = "optimal" | "good" | "moderate" | "low" | "critical";
 
 export interface VYRPillars {
   energia: number; // 0-5

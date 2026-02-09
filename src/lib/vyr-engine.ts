@@ -7,7 +7,9 @@ import type {
   VYRPillars, 
   ComputedState, 
   MomentAction,
-  PillarType 
+  PillarType,
+  StateLevel,
+  ContextStatus,
 } from "./vyr-types";
 import type { PersonalBaseline } from "./vyr-baseline";
 import { FALLBACK_BASELINE, normalizeToBaseline, zToPillarDelta } from "./vyr-baseline";
@@ -275,6 +277,34 @@ export function getRecommendedAction(
   if (score >= 65 && !hasTakenBoot) return "BOOT";
   if (score >= 55 && !hasTakenHold) return "HOLD";
   return "CLEAR";
+}
+
+// ===== NÍVEIS OFICIAIS DO VYR STATE =====
+
+export interface StateLevelInfo {
+  level: StateLevel;
+  label: string;
+}
+
+/**
+ * Retorna o nível oficial do VYR State baseado no score.
+ * Tabela de referência única para todo o sistema.
+ */
+export function getStateLevel(score: number): StateLevelInfo {
+  if (score >= 85) return { level: "optimal", label: "Ótimo" };
+  if (score >= 70) return { level: "good", label: "Bom" };
+  if (score >= 55) return { level: "moderate", label: "Moderado" };
+  if (score >= 40) return { level: "low", label: "Baixo" };
+  return { level: "critical", label: "Crítico" };
+}
+
+/**
+ * Mapeia valor de pilar (0-5) para ContextStatus qualitativo.
+ */
+export function getPillarContextStatus(pillarValue: number): ContextStatus {
+  if (pillarValue >= 4.0) return "favorable";
+  if (pillarValue >= 3.0) return "attention";
+  return "limiting";
 }
 
 // ===== LABELS RICOS =====

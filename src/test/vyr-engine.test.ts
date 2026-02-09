@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeState, normalizeHrvMsToIndex, validateWearableData } from "../lib/vyr-engine";
+import { computeState, normalizeHrvMsToIndex, validateWearableData, getStateLevel, getPillarContextStatus } from "../lib/vyr-engine";
 import { computeBaselineFromHistory, FALLBACK_BASELINE } from "../lib/vyr-baseline";
 import { DEMO_SCENARIOS } from "../lib/vyr-mock-data";
 import type { WearableData } from "../lib/vyr-types";
@@ -95,5 +95,47 @@ describe("computeBaselineFromHistory", () => {
     expect(bl.daysUsed).toBe(7);
     expect(bl.spo2.mean).toBeGreaterThan(96);
     expect(bl.bodyTemperature.mean).toBeGreaterThan(36);
+  });
+});
+
+describe("getStateLevel", () => {
+  it("maps 85-100 to optimal", () => {
+    expect(getStateLevel(85).level).toBe("optimal");
+    expect(getStateLevel(100).level).toBe("optimal");
+  });
+  it("maps 70-84 to good", () => {
+    expect(getStateLevel(70).level).toBe("good");
+    expect(getStateLevel(84).level).toBe("good");
+  });
+  it("maps 55-69 to moderate", () => {
+    expect(getStateLevel(55).level).toBe("moderate");
+    expect(getStateLevel(69).level).toBe("moderate");
+  });
+  it("maps 40-54 to low", () => {
+    expect(getStateLevel(40).level).toBe("low");
+    expect(getStateLevel(54).level).toBe("low");
+  });
+  it("maps 0-39 to critical", () => {
+    expect(getStateLevel(0).level).toBe("critical");
+    expect(getStateLevel(39).level).toBe("critical");
+  });
+  it("returns Portuguese labels", () => {
+    expect(getStateLevel(90).label).toBe("Ótimo");
+    expect(getStateLevel(30).label).toBe("Crítico");
+  });
+});
+
+describe("getPillarContextStatus", () => {
+  it("maps >= 4.0 to favorable", () => {
+    expect(getPillarContextStatus(4.0)).toBe("favorable");
+    expect(getPillarContextStatus(5.0)).toBe("favorable");
+  });
+  it("maps 3.0-3.9 to attention", () => {
+    expect(getPillarContextStatus(3.0)).toBe("attention");
+    expect(getPillarContextStatus(3.9)).toBe("attention");
+  });
+  it("maps < 3.0 to limiting", () => {
+    expect(getPillarContextStatus(2.9)).toBe("limiting");
+    expect(getPillarContextStatus(1.0)).toBe("limiting");
   });
 });

@@ -178,7 +178,7 @@ export function useVYRStore() {
   
   // Contexto fisiológico
   const physiologicalContext = useMemo(() => 
-    generatePhysiologicalContext(todayContext.wearableData),
+    generatePhysiologicalContext(todayContext.wearableData, todayContext.computedState),
     [todayContext]
   );
   

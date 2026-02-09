@@ -17,72 +17,58 @@ import type {
   DetectedPattern,
   DayContext,
 } from "./vyr-types";
+import { getPillarContextStatus } from "./vyr-engine";
 
-// ===== CONTEXTO FISIOLÓGICO =====
+// ===== CONTEXTO FISIOLÓGICO (ALINHADO AOS PILARES) =====
 
-/**
- * Traduz recuperação (RHR + sono) para status qualitativo
- */
-function getRecoveryContext(data: WearableData): ContextItem {
-  const { rhr, sleepDuration, sleepQuality } = data;
-  
-  // Boa recuperação
-  if (rhr < 62 && sleepDuration >= 7 && sleepQuality > 70) {
-    return { label: "Recuperação adequada", status: "favorable" };
-  }
-  
-  // Recuperação comprometida
-  if (rhr > 68 || sleepDuration < 5.5 || sleepQuality < 50) {
-    return { label: "Recuperação comprometida", status: "limiting" };
-  }
-  
-  return { label: "Recuperação parcial", status: "attention" };
-}
-
-/**
- * Traduz regularidade do sono para status qualitativo
- */
-function getRhythmContext(data: WearableData): ContextItem {
-  const { sleepRegularity } = data;
-  
-  if (Math.abs(sleepRegularity) < 20) {
-    return { label: "Ritmo consistente", status: "favorable" };
-  }
-  
-  if (Math.abs(sleepRegularity) > 50) {
-    return { label: "Ritmo irregular", status: "limiting" };
-  }
-  
-  return { label: "Ritmo ligeiramente irregular", status: "attention" };
-}
+const PILLAR_LABELS: Record<PillarType, Record<ContextStatus, string>> = {
+  energia: {
+    favorable: "Energia preservada",
+    attention: "Energia moderada",
+    limiting: "Energia reduzida",
+  },
+  clareza: {
+    favorable: "Clareza disponível",
+    attention: "Clareza parcial",
+    limiting: "Clareza comprometida",
+  },
+  estabilidade: {
+    favorable: "Estabilidade sustentada",
+    attention: "Estabilidade parcial",
+    limiting: "Estabilidade reduzida",
+  },
+};
 
 /**
- * Traduz HRV + stress para reserva fisiológica
+ * Gera contexto fisiológico derivado dos 3 pilares computados.
+ * Substitui thresholds fixos de biomarcadores por status alinhados ao estado calculado.
  */
-function getReserveContext(data: WearableData): ContextItem {
-  const { hrvIndex, stressScore } = data;
-  
-  if (hrvIndex > 60 && stressScore < 40) {
-    return { label: "Reserva fisiológica preservada", status: "favorable" };
+export function generatePhysiologicalContext(
+  data: WearableData,
+  computedState?: ComputedState
+): PhysiologicalContext {
+  // Se não tiver computedState, fallback para pilares neutros
+  if (!computedState) {
+    return {
+      items: [
+        { label: "Energia moderada", status: "attention" },
+        { label: "Clareza parcial", status: "attention" },
+        { label: "Estabilidade parcial", status: "attention" },
+      ],
+    };
   }
-  
-  if (hrvIndex < 40 || stressScore > 60) {
-    return { label: "Reserva fisiológica reduzida", status: "limiting" };
-  }
-  
-  return { label: "Reserva fisiológica moderada", status: "attention" };
-}
 
-/**
- * Gera contexto fisiológico completo (3 items)
- */
-export function generatePhysiologicalContext(data: WearableData): PhysiologicalContext {
+  const { pillars } = computedState;
+  const pillarKeys: PillarType[] = ["energia", "clareza", "estabilidade"];
+
   return {
-    items: [
-      getRecoveryContext(data),
-      getRhythmContext(data),
-      getReserveContext(data),
-    ],
+    items: pillarKeys.map((key): ContextItem => {
+      const status = getPillarContextStatus(pillars[key]);
+      return {
+        label: PILLAR_LABELS[key][status],
+        status,
+      };
+    }),
   };
 }
 
