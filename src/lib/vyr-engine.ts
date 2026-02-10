@@ -53,17 +53,18 @@ export function normalizeWearableInput(data: WearableData): WearableData {
 
 /**
  * Sanitiza dados do wearable, clampando valores para ranges fisiologicamente possíveis.
+ * Campos undefined permanecem undefined.
  */
 export function validateWearableData(data: WearableData): WearableData {
   return {
     ...data,
-    rhr: clamp(data.rhr, 35, 120),
-    hrvIndex: clamp(data.hrvIndex, 0, 100),
-    sleepDuration: clamp(data.sleepDuration, 0, 14),
-    sleepQuality: clamp(data.sleepQuality, 0, 100),
-    sleepRegularity: clamp(data.sleepRegularity, -120, 120),
-    awakenings: clamp(data.awakenings, 0, 30),
-    stressScore: clamp(data.stressScore, 0, 100),
+    rhr: data.rhr != null ? clamp(data.rhr, 35, 120) : undefined,
+    hrvIndex: data.hrvIndex != null ? clamp(data.hrvIndex, 0, 100) : undefined,
+    sleepDuration: data.sleepDuration != null ? clamp(data.sleepDuration, 0, 14) : undefined,
+    sleepQuality: data.sleepQuality != null ? clamp(data.sleepQuality, 0, 100) : undefined,
+    sleepRegularity: data.sleepRegularity != null ? clamp(data.sleepRegularity, -120, 120) : undefined,
+    awakenings: data.awakenings != null ? clamp(data.awakenings, 0, 30) : undefined,
+    stressScore: data.stressScore != null ? clamp(data.stressScore, 0, 100) : undefined,
     spo2: data.spo2 != null ? clamp(data.spo2, 70, 100) : undefined,
     bodyTemperature: data.bodyTemperature != null ? clamp(data.bodyTemperature, 34, 42) : undefined,
   };
@@ -79,96 +80,138 @@ function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
-// ===== PILARES COM BASELINE PESSOAL =====
+// ===== PESOS DINÂMICOS =====
+
+interface WeightedContribution {
+  delta: number;
+  weight: number;
+}
+
+/**
+ * Aplica pesos dinâmicos: coleta contribuições disponíveis e redistribui
+ * para que o total de peso sempre some ao mesmo valor alvo.
+ */
+function applyDynamicWeights(contributions: WeightedContribution[], targetTotalWeight: number): number {
+  const available = contributions.filter(c => !isNaN(c.delta));
+  if (available.length === 0) return 0;
+  
+  const actualTotal = available.reduce((sum, c) => sum + c.weight, 0);
+  const scale = targetTotalWeight / actualTotal;
+  
+  return available.reduce((sum, c) => sum + c.delta * c.weight * scale, 0);
+}
+
+// ===== PILARES COM BASELINE PESSOAL E PESOS DINÂMICOS =====
 
 /**
  * Calcula o pilar ENERGIA usando baseline pessoal.
- * Inputs: RHR (inversamente proporcional), sono, atividade anterior, qualidade do sono.
- * 
- * RHR ABAIXO da média pessoal = coração eficiente = mais energia → z negativo = bom
- * Sono ACIMA da média pessoal = mais descanso = mais energia → z positivo = bom
+ * Redistribui pesos automaticamente se biomarcadores estiverem ausentes.
  */
 export function computeEnergia(data: WearableData, baseline?: PersonalBaseline): number {
   const bl = baseline ?? FALLBACK_BASELINE;
   let base = 3; // neutro
 
-  // RHR: abaixo da média = bom (invertido)
-  const rhrZ = normalizeToBaseline(data.rhr, bl.rhr);
-  base += zToPillarDelta(-rhrZ); // inverte: RHR baixo = positivo
+  const contributions: WeightedContribution[] = [];
 
-  // Sono: acima da média = bom
-  const sleepZ = normalizeToBaseline(data.sleepDuration, bl.sleepDuration);
-  base += zToPillarDelta(sleepZ);
+  // RHR: abaixo da média = bom (invertido) — peso 1.0
+  if (data.rhr != null) {
+    const rhrZ = normalizeToBaseline(data.rhr, bl.rhr);
+    contributions.push({ delta: zToPillarDelta(-rhrZ), weight: 1.0 });
+  }
 
-  // Qualidade do sono
-  const qualityZ = normalizeToBaseline(data.sleepQuality, bl.sleepQuality);
-  base += zToPillarDelta(qualityZ) * 0.5; // peso menor
+  // Sono: acima da média = bom — peso 1.0
+  if (data.sleepDuration != null) {
+    const sleepZ = normalizeToBaseline(data.sleepDuration, bl.sleepDuration);
+    contributions.push({ delta: zToPillarDelta(sleepZ), weight: 1.0 });
+  }
 
-  // Atividade alta ontem = penalização fixa (não é relativa)
-  if (data.previousDayActivity === "high") base -= 0.5;
-  else if (data.previousDayActivity === "low") base += 0.25;
+  // Qualidade do sono — peso 0.5
+  if (data.sleepQuality != null) {
+    const qualityZ = normalizeToBaseline(data.sleepQuality, bl.sleepQuality);
+    contributions.push({ delta: zToPillarDelta(qualityZ), weight: 0.5 });
+  }
 
-  // SpO2: abaixo do baseline = oxigenação comprometida = menos energia
+  // SpO2: abaixo do baseline = menos energia — peso 0.4
   if (data.spo2 != null) {
     const spo2Z = normalizeToBaseline(data.spo2, bl.spo2);
-    base += zToPillarDelta(spo2Z) * 0.4; // peso moderado
+    contributions.push({ delta: zToPillarDelta(spo2Z), weight: 0.4 });
   }
+
+  // Peso alvo = soma dos pesos nominais dos inputs "core" (RHR + sono + qualidade)
+  const TARGET_WEIGHT = 2.5;
+  base += applyDynamicWeights(contributions, TARGET_WEIGHT);
+
+  // Atividade alta ontem = penalização fixa (não participa da redistribuição)
+  if (data.previousDayActivity === "high") base -= 0.5;
+  else if (data.previousDayActivity === "low") base += 0.25;
 
   return round1(clamp(base, 1, 5));
 }
 
 /**
  * Calcula o pilar CLAREZA usando baseline pessoal.
- * Inputs: regularidade do sono, qualidade, despertares.
- * 
- * Regularidade ABAIXO da média (menos variação) = bom → z negativo = bom
- * Qualidade ACIMA = bom → z positivo = bom  
- * Despertares ABAIXO = bom → z negativo = bom
+ * Redistribui pesos automaticamente se biomarcadores estiverem ausentes.
  */
 export function computeClareza(data: WearableData, baseline?: PersonalBaseline): number {
   const bl = baseline ?? FALLBACK_BASELINE;
   let base = 3;
 
-  // Regularidade: menos variação = melhor (invertido)
-  const regZ = normalizeToBaseline(Math.abs(data.sleepRegularity), bl.sleepRegularity);
-  base += zToPillarDelta(-regZ); // inverte: menos irregular = positivo
+  const contributions: WeightedContribution[] = [];
 
-  // Qualidade do sono: mais = melhor
-  const qualityZ = normalizeToBaseline(data.sleepQuality, bl.sleepQuality);
-  base += zToPillarDelta(qualityZ);
+  // Regularidade: menos variação = melhor (invertido) — peso 1.0
+  if (data.sleepRegularity != null) {
+    const regZ = normalizeToBaseline(Math.abs(data.sleepRegularity), bl.sleepRegularity);
+    contributions.push({ delta: zToPillarDelta(-regZ), weight: 1.0 });
+  }
 
-  // Despertares: menos = melhor (invertido)
-  const awakeZ = normalizeToBaseline(data.awakenings, bl.awakenings);
-  base += zToPillarDelta(-awakeZ) * 0.5; // inverte, peso menor
+  // Qualidade do sono: mais = melhor — peso 1.0
+  if (data.sleepQuality != null) {
+    const qualityZ = normalizeToBaseline(data.sleepQuality, bl.sleepQuality);
+    contributions.push({ delta: zToPillarDelta(qualityZ), weight: 1.0 });
+  }
+
+  // Despertares: menos = melhor (invertido) — peso 0.5
+  if (data.awakenings != null) {
+    const awakeZ = normalizeToBaseline(data.awakenings, bl.awakenings);
+    contributions.push({ delta: zToPillarDelta(-awakeZ), weight: 0.5 });
+  }
+
+  const TARGET_WEIGHT = 2.5;
+  base += applyDynamicWeights(contributions, TARGET_WEIGHT);
 
   return round1(clamp(base, 1, 5));
 }
 
 /**
  * Calcula o pilar ESTABILIDADE usando baseline pessoal.
- * Inputs: HRV, stress.
- * 
- * HRV ACIMA da média = sistema nervoso equilibrado = bom → z positivo = bom
- * Stress ABAIXO da média = bom → z negativo = bom
+ * Redistribui pesos automaticamente se biomarcadores estiverem ausentes.
  */
 export function computeEstabilidade(data: WearableData, baseline?: PersonalBaseline): number {
   const bl = baseline ?? FALLBACK_BASELINE;
   let base = 3;
 
-  // HRV: acima da média = melhor
-  const hrvZ = normalizeToBaseline(data.hrvIndex, bl.hrvIndex);
-  base += zToPillarDelta(hrvZ) * 1.3; // HRV tem peso maior na estabilidade
+  const contributions: WeightedContribution[] = [];
 
-  // Stress: abaixo da média = melhor (invertido)
-  const stressZ = normalizeToBaseline(data.stressScore, bl.stressScore);
-  base += zToPillarDelta(-stressZ) * 0.7;
+  // HRV: acima da média = melhor — peso 1.3
+  if (data.hrvIndex != null) {
+    const hrvZ = normalizeToBaseline(data.hrvIndex, bl.hrvIndex);
+    contributions.push({ delta: zToPillarDelta(hrvZ), weight: 1.3 });
+  }
 
-  // Temperatura: desvio da média pessoal indica alteração fisiológica
-  // Tanto acima quanto abaixo do normal = instabilidade
+  // Stress: abaixo da média = melhor (invertido) — peso 0.7
+  if (data.stressScore != null) {
+    const stressZ = normalizeToBaseline(data.stressScore, bl.stressScore);
+    contributions.push({ delta: zToPillarDelta(-stressZ), weight: 0.7 });
+  }
+
+  // Temperatura: desvio = instabilidade — peso 0.3
   if (data.bodyTemperature != null) {
     const tempZ = normalizeToBaseline(data.bodyTemperature, bl.bodyTemperature);
-    base -= Math.abs(zToPillarDelta(tempZ)) * 0.3; // penaliza desvio em qualquer direção
+    contributions.push({ delta: -Math.abs(zToPillarDelta(tempZ)), weight: 0.3 });
   }
+
+  const TARGET_WEIGHT = 2.0;
+  base += applyDynamicWeights(contributions, TARGET_WEIGHT);
 
   return round1(clamp(base, 1, 5));
 }
@@ -233,7 +276,9 @@ export function getRecommendedAction(
   }
 
   // === Score muito baixo = recuperação independente do horário ===
-  if (score < 45 || pillars.energia <= 2 || pillars.estabilidade <= 2) {
+  const energia = pillars.energia;
+  const estabilidade = pillars.estabilidade;
+  if (score < 45 || energia <= 2 || estabilidade <= 2) {
     return "CLEAR";
   }
 

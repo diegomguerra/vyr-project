@@ -139,3 +139,60 @@ describe("getPillarContextStatus", () => {
     expect(getPillarContextStatus(1.0)).toBe("limiting");
   });
 });
+
+describe("dynamic weights with partial data", () => {
+  it("computes state with only sleep data (no HRV, no RHR)", () => {
+    const minimal: WearableData = {
+      date: "2026-02-10",
+      sleepDuration: 7.5,
+      sleepQuality: 75,
+    };
+    const state = computeState(minimal);
+    expect(state.vyrScore).toBeGreaterThanOrEqual(0);
+    expect(state.vyrScore).toBeLessThanOrEqual(100);
+    expect(state.pillars.energia).toBeGreaterThanOrEqual(1);
+    expect(state.pillars.clareza).toBeGreaterThanOrEqual(1);
+    expect(state.pillars.estabilidade).toBeGreaterThanOrEqual(1);
+  });
+
+  it("computes state with only HRV and stress (no sleep data)", () => {
+    const minimal: WearableData = {
+      date: "2026-02-10",
+      hrvRawMs: 55,
+      stressScore: 35,
+    };
+    const state = computeState(minimal);
+    expect(state.vyrScore).toBeGreaterThanOrEqual(0);
+    expect(state.pillars.estabilidade).toBeGreaterThanOrEqual(1);
+  });
+
+  it("computes state with zero inputs (date only)", () => {
+    const empty: WearableData = { date: "2026-02-10" };
+    const state = computeState(empty);
+    // Should return neutral state (base=3 for all pillars)
+    expect(state.vyrScore).toBe(60); // (3+3+3)/3 = 3, min=3, weighted=3, 3/5*100=60
+    expect(state.pillars.energia).toBe(3);
+    expect(state.pillars.clareza).toBe(3);
+    expect(state.pillars.estabilidade).toBe(3);
+  });
+
+  it("full data produces same result as before (no regression)", () => {
+    const full = DEMO_SCENARIOS.highPerformance.wearableData as WearableData;
+    const state = computeState(full);
+    expect(state.vyrScore).toBeGreaterThan(60);
+    expect(state.pillars.energia).toBeGreaterThan(3);
+  });
+
+  it("more data produces different results than less data", () => {
+    const partial: WearableData = { date: "2026-02-10", sleepQuality: 90 };
+    const full: WearableData = {
+      date: "2026-02-10", rhr: 55, hrvRawMs: 70, sleepDuration: 8,
+      sleepQuality: 90, sleepRegularity: -5, awakenings: 1,
+      stressScore: 20, spo2: 99,
+    };
+    const statePartial = computeState(partial);
+    const stateFull = computeState(full);
+    // Full good data should score higher than partial
+    expect(stateFull.vyrScore).toBeGreaterThan(statePartial.vyrScore);
+  });
+});

@@ -88,19 +88,21 @@ export interface ActionLog {
 // ===== NOVOS TIPOS - BIOMARCADORES E ENGINE =====
 
 // Dados crus da pulseira (NUNCA exibidos ao usuário)
+// Todos os campos são opcionais exceto `date` — cada wearable envia o que pode.
+// O engine redistribui pesos dinamicamente com base nos inputs disponíveis.
 export interface WearableData {
   date: string;
-  rhr: number;                    // 55-80 bpm típico (usar mínimo noturno)
-  hrvIndex: number;               // 0-100 (normalizado internamente)
-  sleepDuration: number;          // em horas decimais
-  sleepQuality: number;           // 0-100
-  sleepRegularity: number;        // -60 a +60 min vs média
-  awakenings: number;             // 0-10+
-  previousDayActivity: ActivityLevel;
-  stressScore: number;            // 0-100
-  spo2?: number;                  // 90-100% (saturação de oxigênio)
-  bodyTemperature?: number;       // 35.0-39.0 °C
-  hrvRawMs?: number;              // HRV bruto em milissegundos (ex: 44ms do QRing)
+  rhr?: number;                    // 55-80 bpm típico (usar mínimo noturno)
+  hrvIndex?: number;               // 0-100 (normalizado internamente)
+  sleepDuration?: number;          // em horas decimais
+  sleepQuality?: number;           // 0-100
+  sleepRegularity?: number;        // -60 a +60 min vs média
+  awakenings?: number;             // 0-10+
+  previousDayActivity?: ActivityLevel;
+  stressScore?: number;            // 0-100
+  spo2?: number;                   // 90-100% (saturação de oxigênio)
+  bodyTemperature?: number;        // 35.0-39.0 °C
+  hrvRawMs?: number;               // HRV bruto em milissegundos (ex: 44ms do QRing)
 }
 
 // Estado computado pela VYR Engine

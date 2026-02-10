@@ -80,16 +80,16 @@ export function computeBaselineFromHistory(
   }
 
   return {
-    rhr: computeMetric(recent.map((d) => d.rhr), FALLBACK_BASELINE.rhr),
-    hrvIndex: computeMetric(recent.map((d) => d.hrvIndex), FALLBACK_BASELINE.hrvIndex),
-    sleepDuration: computeMetric(recent.map((d) => d.sleepDuration), FALLBACK_BASELINE.sleepDuration),
-    sleepQuality: computeMetric(recent.map((d) => d.sleepQuality), FALLBACK_BASELINE.sleepQuality),
+    rhr: computeMetric(recent.filter((d) => d.rhr != null).map((d) => d.rhr!), FALLBACK_BASELINE.rhr),
+    hrvIndex: computeMetric(recent.filter((d) => d.hrvIndex != null).map((d) => d.hrvIndex!), FALLBACK_BASELINE.hrvIndex),
+    sleepDuration: computeMetric(recent.filter((d) => d.sleepDuration != null).map((d) => d.sleepDuration!), FALLBACK_BASELINE.sleepDuration),
+    sleepQuality: computeMetric(recent.filter((d) => d.sleepQuality != null).map((d) => d.sleepQuality!), FALLBACK_BASELINE.sleepQuality),
     sleepRegularity: computeMetric(
-      recent.map((d) => Math.abs(d.sleepRegularity)),
+      recent.filter((d) => d.sleepRegularity != null).map((d) => Math.abs(d.sleepRegularity!)),
       FALLBACK_BASELINE.sleepRegularity
     ),
-    awakenings: computeMetric(recent.map((d) => d.awakenings), FALLBACK_BASELINE.awakenings),
-    stressScore: computeMetric(recent.map((d) => d.stressScore), FALLBACK_BASELINE.stressScore),
+    awakenings: computeMetric(recent.filter((d) => d.awakenings != null).map((d) => d.awakenings!), FALLBACK_BASELINE.awakenings),
+    stressScore: computeMetric(recent.filter((d) => d.stressScore != null).map((d) => d.stressScore!), FALLBACK_BASELINE.stressScore),
     spo2: computeMetric(
       recent.filter((d) => d.spo2 != null).map((d) => d.spo2!),
       FALLBACK_BASELINE.spo2

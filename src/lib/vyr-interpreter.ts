@@ -205,11 +205,9 @@ export function generateSystemReading(
     limitingFactor = `${capitalize(PILLAR_NAMES[limitingPillar])} requer atenção prioritária.`;
   }
   
-  // Day Risk
+  // Day Risk — usa pilares em vez de biomarcadores brutos
   let dayRisk: string;
-  if (data.stressScore > 55 || data.hrvIndex < 45) {
-    dayRisk = "Evite sobrecarga cognitiva prolongada.";
-  } else if (pillars.estabilidade < 3) {
+  if (pillars.estabilidade < 3) {
     dayRisk = "Pausas estratégicas tendem a preservar melhor o rendimento.";
   } else if (pillars.energia < 3) {
     dayRisk = "Economia de energia mental é indicada.";
