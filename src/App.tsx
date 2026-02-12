@@ -15,8 +15,10 @@ import Labs from "./pages/Labs";
 import WearableSetup from "./pages/WearableSetup";
 import WearablePermissions from "./pages/WearablePermissions";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login";
 import { WearableConnected } from "./components/vyr";
 import { useVYRStore, getGreeting } from "./lib/vyr-store";
+import { useAuth } from "./hooks/use-auth";
 import type { DailyReview as DailyReviewType, WearableProvider } from "./lib/vyr-types";
 
 const queryClient = new QueryClient();
@@ -262,14 +264,24 @@ function VYRApp() {
   );
 }
 
-// App principal
+// App principal com auth gate
 const App = () => {
+  const { user, loading } = useAuth();
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <VYRApp />
+        {loading ? (
+          <div className="min-h-screen bg-vyr-bg-primary flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-vyr-accent border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : user ? (
+          <VYRApp />
+        ) : (
+          <Login />
+        )}
       </TooltipProvider>
     </QueryClientProvider>
   );

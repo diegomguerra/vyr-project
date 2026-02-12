@@ -1,7 +1,8 @@
 // VYR Labs - Settings Page
 // Configurações e gerenciamento de wearable
 
-import { ChevronLeft, Watch, RefreshCw, Unlink, Shield, Database } from "lucide-react";
+import { ChevronLeft, Watch, RefreshCw, Unlink, Shield, Database, LogOut } from "lucide-react";
+import { signOut } from "@/hooks/use-auth";
 import type { WearableConnection, WearableProvider } from "@/lib/vyr-types";
 
 interface SettingsProps {
@@ -184,8 +185,24 @@ export default function Settings({ connection, onBack, onReconnect, onDisconnect
         </div>
       </section>
 
+      {/* Account Section */}
+      <section className="mt-8 animate-fade-in" style={{ animationDelay: "300ms" }}>
+        <h2 className="text-vyr-text-muted text-xs font-medium tracking-wider uppercase mb-4">
+          Conta
+        </h2>
+        <div className="bg-vyr-bg-surface rounded-2xl p-4">
+          <button
+            onClick={() => signOut()}
+            className="flex items-center gap-3 w-full text-left text-vyr-status-negative transition-all active:scale-[0.98]"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="text-sm font-medium">Sair da conta</span>
+          </button>
+        </div>
+      </section>
+
       {/* Build Info */}
-      <section className="mt-10 animate-fade-in" style={{ animationDelay: "300ms" }}>
+      <section className="mt-10 animate-fade-in" style={{ animationDelay: "400ms" }}>
         <p className="text-vyr-text-muted/40 text-[10px] text-center font-mono tracking-wide">
           VYR v1 · build {__BUILD_SHA__.slice(0, 7)} · {__BUILD_TIME__.split("T")[0]}
         </p>
