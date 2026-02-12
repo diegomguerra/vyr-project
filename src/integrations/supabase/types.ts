@@ -14,6 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
+      action_logs: {
+        Row: {
+          action: Database["public"]["Enums"]["vyr_action"]
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["vyr_action"]
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["vyr_action"]
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      checkpoints: {
+        Row: {
+          created_at: string | null
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      computed_states: {
+        Row: {
+          action_reason: string | null
+          clareza: number | null
+          created_at: string | null
+          date: string
+          dominant_pillar: string | null
+          energia: number | null
+          estabilidade: number | null
+          id: string
+          limiting_pillar: string | null
+          recommended_action: Database["public"]["Enums"]["vyr_action"] | null
+          state_label: string | null
+          user_id: string
+          vyr_score: number | null
+        }
+        Insert: {
+          action_reason?: string | null
+          clareza?: number | null
+          created_at?: string | null
+          date: string
+          dominant_pillar?: string | null
+          energia?: number | null
+          estabilidade?: number | null
+          id?: string
+          limiting_pillar?: string | null
+          recommended_action?: Database["public"]["Enums"]["vyr_action"] | null
+          state_label?: string | null
+          user_id: string
+          vyr_score?: number | null
+        }
+        Update: {
+          action_reason?: string | null
+          clareza?: number | null
+          created_at?: string | null
+          date?: string
+          dominant_pillar?: string | null
+          energia?: number | null
+          estabilidade?: number | null
+          id?: string
+          limiting_pillar?: string | null
+          recommended_action?: Database["public"]["Enums"]["vyr_action"] | null
+          state_label?: string | null
+          user_id?: string
+          vyr_score?: number | null
+        }
+        Relationships: []
+      }
+      daily_reviews: {
+        Row: {
+          closing_line: string | null
+          created_at: string | null
+          date: string
+          id: string
+          narrative_end: string | null
+          narrative_middle: string | null
+          narrative_start: string | null
+          user_id: string
+          value_generated: string | null
+        }
+        Insert: {
+          closing_line?: string | null
+          created_at?: string | null
+          date: string
+          id?: string
+          narrative_end?: string | null
+          narrative_middle?: string | null
+          narrative_start?: string | null
+          user_id: string
+          value_generated?: string | null
+        }
+        Update: {
+          closing_line?: string | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          narrative_end?: string | null
+          narrative_middle?: string | null
+          narrative_start?: string | null
+          user_id?: string
+          value_generated?: string | null
+        }
+        Relationships: []
+      }
       participantes: {
         Row: {
           altura_cm: number | null
@@ -21,7 +147,7 @@ export type Database = {
           condicoes_saude: string[] | null
           consumo_alcool: string | null
           consumo_cafeina: string | null
-          created_at: string
+          created_at: string | null
           data_nascimento: string
           frequencia_exercicio: string | null
           horario_acordar: string | null
@@ -42,8 +168,8 @@ export type Database = {
           pratica_exercicio: boolean | null
           qualidade_sono_geral: number | null
           rotina_trabalho: Database["public"]["Enums"]["rotina_trabalho"] | null
-          sexo: Database["public"]["Enums"]["sexo_tipo"]
-          updated_at: string
+          sexo: Database["public"]["Enums"]["sexo_tipo"] | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -52,8 +178,8 @@ export type Database = {
           condicoes_saude?: string[] | null
           consumo_alcool?: string | null
           consumo_cafeina?: string | null
-          created_at?: string
-          data_nascimento: string
+          created_at?: string | null
+          data_nascimento?: string
           frequencia_exercicio?: string | null
           horario_acordar?: string | null
           horario_dormir?: string | null
@@ -75,8 +201,8 @@ export type Database = {
           rotina_trabalho?:
             | Database["public"]["Enums"]["rotina_trabalho"]
             | null
-          sexo?: Database["public"]["Enums"]["sexo_tipo"]
-          updated_at?: string
+          sexo?: Database["public"]["Enums"]["sexo_tipo"] | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -85,7 +211,7 @@ export type Database = {
           condicoes_saude?: string[] | null
           consumo_alcool?: string | null
           consumo_cafeina?: string | null
-          created_at?: string
+          created_at?: string | null
           data_nascimento?: string
           frequencia_exercicio?: string | null
           horario_acordar?: string | null
@@ -108,8 +234,8 @@ export type Database = {
           rotina_trabalho?:
             | Database["public"]["Enums"]["rotina_trabalho"]
             | null
-          sexo?: Database["public"]["Enums"]["sexo_tipo"]
-          updated_at?: string
+          sexo?: Database["public"]["Enums"]["sexo_tipo"] | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -146,9 +272,9 @@ export type Database = {
       }
       registros_dose: {
         Row: {
-          created_at: string
+          created_at: string | null
           data: string
-          efeito_indesejado: Database["public"]["Enums"]["severidade"]
+          efeito_indesejado: Database["public"]["Enums"]["severidade"] | null
           escala_1: number | null
           escala_2: number | null
           escala_3: number | null
@@ -158,12 +284,12 @@ export type Database = {
           observacoes: string | null
           participante_id: string
           sintomas: string[] | null
-          tomou: boolean
+          tomou: boolean | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           data: string
-          efeito_indesejado?: Database["public"]["Enums"]["severidade"]
+          efeito_indesejado?: Database["public"]["Enums"]["severidade"] | null
           escala_1?: number | null
           escala_2?: number | null
           escala_3?: number | null
@@ -173,12 +299,12 @@ export type Database = {
           observacoes?: string | null
           participante_id: string
           sintomas?: string[] | null
-          tomou?: boolean
+          tomou?: boolean | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           data?: string
-          efeito_indesejado?: Database["public"]["Enums"]["severidade"]
+          efeito_indesejado?: Database["public"]["Enums"]["severidade"] | null
           escala_1?: number | null
           escala_2?: number | null
           escala_3?: number | null
@@ -188,7 +314,7 @@ export type Database = {
           observacoes?: string | null
           participante_id?: string
           sintomas?: string[] | null
-          tomou?: boolean
+          tomou?: boolean | null
         }
         Relationships: [
           {
@@ -203,7 +329,7 @@ export type Database = {
       resumos_diarios: {
         Row: {
           cafeina_doses: number | null
-          created_at: string
+          created_at: string | null
           data: string
           despertares: number | null
           estresse_dia: number | null
@@ -216,7 +342,7 @@ export type Database = {
         }
         Insert: {
           cafeina_doses?: number | null
-          created_at?: string
+          created_at?: string | null
           data: string
           despertares?: number | null
           estresse_dia?: number | null
@@ -229,7 +355,7 @@ export type Database = {
         }
         Update: {
           cafeina_doses?: number | null
-          created_at?: string
+          created_at?: string | null
           data?: string
           despertares?: number | null
           estresse_dia?: number | null
@@ -252,63 +378,126 @@ export type Database = {
       }
       ring_daily_data: {
         Row: {
-          created_at: string
+          created_at: string | null
           day: string
           id: string
-          metrics: Json
-          source_provider: string
-          updated_at: string
+          metrics: Json | null
+          source_provider: string | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           day: string
           id?: string
-          metrics?: Json
-          source_provider?: string
-          updated_at?: string
+          metrics?: Json | null
+          source_provider?: string | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           day?: string
           id?: string
-          metrics?: Json
-          source_provider?: string
-          updated_at?: string
+          metrics?: Json | null
+          source_provider?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_baselines: {
+        Row: {
+          computed_at: string | null
+          days_used: number | null
+          hrv_mean: number | null
+          hrv_std: number | null
+          id: string
+          rhr_mean: number | null
+          rhr_std: number | null
+          sleep_duration_mean: number | null
+          sleep_duration_std: number | null
+          sleep_quality_mean: number | null
+          sleep_quality_std: number | null
+          spo2_mean: number | null
+          spo2_std: number | null
+          stress_mean: number | null
+          stress_std: number | null
+          temp_mean: number | null
+          temp_std: number | null
+          user_id: string
+        }
+        Insert: {
+          computed_at?: string | null
+          days_used?: number | null
+          hrv_mean?: number | null
+          hrv_std?: number | null
+          id?: string
+          rhr_mean?: number | null
+          rhr_std?: number | null
+          sleep_duration_mean?: number | null
+          sleep_duration_std?: number | null
+          sleep_quality_mean?: number | null
+          sleep_quality_std?: number | null
+          spo2_mean?: number | null
+          spo2_std?: number | null
+          stress_mean?: number | null
+          stress_std?: number | null
+          temp_mean?: number | null
+          temp_std?: number | null
+          user_id: string
+        }
+        Update: {
+          computed_at?: string | null
+          days_used?: number | null
+          hrv_mean?: number | null
+          hrv_std?: number | null
+          id?: string
+          rhr_mean?: number | null
+          rhr_std?: number | null
+          sleep_duration_mean?: number | null
+          sleep_duration_std?: number | null
+          sleep_quality_mean?: number | null
+          sleep_quality_std?: number | null
+          spo2_mean?: number | null
+          spo2_std?: number | null
+          stress_mean?: number | null
+          stress_std?: number | null
+          temp_mean?: number | null
+          temp_std?: number | null
           user_id?: string
         }
         Relationships: []
       }
       user_consents: {
         Row: {
-          accepted_privacy: boolean
-          accepted_terms: boolean
+          accepted_privacy: boolean | null
+          accepted_terms: boolean | null
           consent_version: string
-          created_at: string
+          created_at: string | null
           id: string
-          legal_basis: string
-          scope: Json
+          legal_basis: string | null
+          scope: Json | null
           user_id: string
         }
         Insert: {
-          accepted_privacy?: boolean
-          accepted_terms?: boolean
+          accepted_privacy?: boolean | null
+          accepted_terms?: boolean | null
           consent_version: string
-          created_at?: string
+          created_at?: string | null
           id?: string
-          legal_basis?: string
-          scope?: Json
+          legal_basis?: string | null
+          scope?: Json | null
           user_id: string
         }
         Update: {
-          accepted_privacy?: boolean
-          accepted_terms?: boolean
+          accepted_privacy?: boolean | null
+          accepted_terms?: boolean | null
           consent_version?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
-          legal_basis?: string
-          scope?: Json
+          legal_basis?: string | null
+          scope?: Json | null
           user_id?: string
         }
         Relationships: []
@@ -316,89 +505,110 @@ export type Database = {
       user_integrations: {
         Row: {
           access_token: string | null
-          created_at: string
+          created_at: string | null
           external_user_id: string | null
           id: string
           last_error: string | null
           last_sync_at: string | null
-          meta: Json
+          meta: Json | null
           provider: string
           refresh_token: string | null
-          scopes: string[]
-          status: string
+          scopes: string[] | null
+          status: string | null
           token_expires_at: string | null
-          updated_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           access_token?: string | null
-          created_at?: string
+          created_at?: string | null
           external_user_id?: string | null
           id?: string
           last_error?: string | null
           last_sync_at?: string | null
-          meta?: Json
+          meta?: Json | null
           provider: string
           refresh_token?: string | null
-          scopes?: string[]
-          status?: string
+          scopes?: string[] | null
+          status?: string | null
           token_expires_at?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           access_token?: string | null
-          created_at?: string
+          created_at?: string | null
           external_user_id?: string | null
           id?: string
           last_error?: string | null
           last_sync_at?: string | null
-          meta?: Json
+          meta?: Json | null
           provider?: string
           refresh_token?: string | null
-          scopes?: string[]
-          status?: string
+          scopes?: string[] | null
+          status?: string | null
           token_expires_at?: string | null
-          updated_at?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
       }
       webhook_logs: {
         Row: {
-          created_at: string
+          created_at: string | null
           error: string | null
           event_type: string | null
           id: string
           idempotency_key: string | null
           payload_hash: string | null
           provider: string
-          signature_valid: boolean
-          status: string
+          signature_valid: boolean | null
+          status: string | null
           user_id: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           error?: string | null
           event_type?: string | null
           id?: string
           idempotency_key?: string | null
           payload_hash?: string | null
           provider: string
-          signature_valid?: boolean
-          status?: string
+          signature_valid?: boolean | null
+          status?: string | null
           user_id?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           error?: string | null
           event_type?: string | null
           id?: string
           idempotency_key?: string | null
           payload_hash?: string | null
           provider?: string
-          signature_valid?: boolean
-          status?: string
+          signature_valid?: boolean | null
+          status?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -408,9 +618,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       janela_dose: "DIA" | "TARDE" | "NOITE"
       perfil_atividade:
         | "CONDUCAO"
@@ -421,6 +638,7 @@ export type Database = {
       rotina_trabalho: "REUNIOES" | "FOCO" | "MISTO"
       severidade: "NENHUM" | "LEVE" | "MODERADO" | "FORTE"
       sexo_tipo: "MASCULINO" | "FEMININO" | "OUTRO" | "NAO_INFORMAR"
+      vyr_action: "BOOT" | "HOLD" | "CLEAR"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -548,6 +766,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       janela_dose: ["DIA", "TARDE", "NOITE"],
       perfil_atividade: [
         "CONDUCAO",
@@ -559,6 +778,7 @@ export const Constants = {
       rotina_trabalho: ["REUNIOES", "FOCO", "MISTO"],
       severidade: ["NENHUM", "LEVE", "MODERADO", "FORTE"],
       sexo_tipo: ["MASCULINO", "FEMININO", "OUTRO", "NAO_INFORMAR"],
+      vyr_action: ["BOOT", "HOLD", "CLEAR"],
     },
   },
 } as const
