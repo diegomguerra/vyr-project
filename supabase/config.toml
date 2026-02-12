@@ -1,1 +1,7 @@
-project_id = "jjuuexzrfcnjngxbxine"
+project_id = "uirbicdwikvgnuounlia"
+
+[functions.generate-insights]
+verify_jwt = true
+
+[functions.send-contact-email]
+verify_jwt = false
