@@ -63,7 +63,7 @@ export default function Home({
   const yesterdayScore = historyByDay.length > 1 ? historyByDay[1].score : state.vyrStateScore;
 
   return (
-    <div className="min-h-screen bg-vyr-bg-primary px-5 py-6 pb-28">
+    <div className="min-h-screen bg-vyr-bg-primary px-5 pt-6 pb-28 safe-area-top safe-area-left safe-area-right">
       {/* Connection Status + Saudação */}
       <div className="flex items-center justify-between mb-6 animate-fade-in">
         <p className="text-vyr-text-secondary text-base">

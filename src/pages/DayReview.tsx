@@ -11,7 +11,7 @@ interface DayReviewProps {
 
 export default function DayReview({ review, onBack }: DayReviewProps) {
   return (
-    <div className="min-h-screen bg-vyr-bg-primary px-6 py-4 flex flex-col">
+    <div className="min-h-screen bg-vyr-bg-primary px-6 pt-4 pb-4 flex flex-col safe-area-top">
       {/* Header */}
       <div className="flex items-center gap-3 mb-12">
         <button

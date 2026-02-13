@@ -52,7 +52,7 @@ export default function StateDetail({ state, onBack }: StateDetailProps) {
   const levelInfo = getStateLevel(state.vyrStateScore);
 
   return (
-    <div className="min-h-screen bg-vyr-bg-primary px-5 py-4 pb-28">
+    <div className="min-h-screen bg-vyr-bg-primary px-5 pt-4 pb-28 safe-area-top">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button

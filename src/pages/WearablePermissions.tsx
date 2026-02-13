@@ -268,7 +268,7 @@ export default function WearablePermissions({ provider, onBack, onAuthorize }: W
   const providerName = PROVIDER_NAMES[provider];
 
   return (
-    <div className="min-h-screen bg-vyr-bg-primary px-5 py-6 pb-28">
+    <div className="min-h-screen bg-vyr-bg-primary px-5 pt-6 pb-28 safe-area-top">
       {/* Header */}
       <button
         onClick={onBack}

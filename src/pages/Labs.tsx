@@ -140,7 +140,7 @@ export default function Labs({
   return (
     <div className="min-h-screen bg-vyr-bg-primary pb-28">
       {/* Header */}
-      <div className="sticky top-0 bg-vyr-bg-primary/95 backdrop-blur-sm border-b border-vyr-stroke-divider px-5 py-4 z-10">
+      <div className="sticky top-0 bg-vyr-bg-primary/95 backdrop-blur-sm border-b border-vyr-stroke-divider px-5 py-4 z-10 safe-area-top">
         <div className="flex items-center gap-3 mb-4">
           <button
             onClick={onBack}

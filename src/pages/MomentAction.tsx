@@ -39,7 +39,7 @@ export default function MomentActionPage({ action, onBack, onConfirm }: MomentAc
   return (
     <div className="min-h-screen bg-vyr-bg-primary flex flex-col">
       {/* Header com gradiente */}
-      <div className={`relative bg-gradient-to-b ${gradientClass} px-5 pt-4 pb-12`}>
+      <div className={`relative bg-gradient-to-b ${gradientClass} px-5 pt-4 pb-12 safe-area-top`}>
         <button
           onClick={onBack}
           className="p-2 -ml-2 rounded-full transition-colors active:bg-vyr-bg-surface/50"
