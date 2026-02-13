@@ -1,7 +1,7 @@
-import { Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import brainIcon from "@/assets/brain-icon.png";
 
 type LoginLayoutProps = {
   email: string;
@@ -30,9 +30,7 @@ export function LoginLayout({
         {/* Header */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#14161B] to-[#556B8A] flex items-center justify-center">
-              <Brain className="w-6 h-6 text-[#ECEEF2]" />
-            </div>
+            <img src={brainIcon} alt="VYR Brain" className="w-12 h-12 rounded-lg" />
             <div>
               <h2 className="text-xl font-semibold text-[#ECEEF2] font-mono tracking-wide">
                 VYR App

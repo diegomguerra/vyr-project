@@ -1,4 +1,5 @@
-import { Brain, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
+import brainIcon from "@/assets/brain-icon.png";
 import { signOut } from "@/lib/api";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -29,9 +30,7 @@ export function AppHeader({ codigo }: AppHeaderProps) {
     <header className="sticky top-0 z-10 bg-gradient-to-r from-vyr-gray-900 via-vyr-graphite-dark/95 to-vyr-gray-900/90 backdrop-blur-xl border-b border-vyr-graphite/50 safe-area-top">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
         <div className="min-w-0 flex-1 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-vyr-graphite to-vyr-accent flex items-center justify-center shadow-lg shadow-vyr-accent/10">
-            <Brain className="w-4 h-4 text-vyr-white" />
-          </div>
+          <img src={brainIcon} alt="VYR" className="w-8 h-8 rounded-sm" />
           <div>
             <h1 className="font-bold text-vyr-white text-sm sm:text-base font-mono tracking-wide">VYR App</h1>
             <p className="text-[10px] sm:text-xs text-vyr-gray-400">
