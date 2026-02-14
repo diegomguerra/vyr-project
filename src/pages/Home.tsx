@@ -213,7 +213,7 @@ export default function Home({
         </p>
         <ActionButton
           action={state.momentAction}
-          label={`Tomei ${state.momentAction}`}
+          label={state.momentAction}
           onTap={onActionTap}
         />
         
