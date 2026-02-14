@@ -208,14 +208,17 @@ export default function Home({
           </p>
         </div>
 
+        <p className="text-vyr-accent-action text-xs font-medium text-center tracking-wide mb-2">
+          ⬇ Clique ao tomar o sachê
+        </p>
         <ActionButton
           action={state.momentAction}
-          label={state.momentActionTitle}
+          label={`Tomei ${state.momentAction}`}
           onTap={onActionTap}
         />
         
-        <p className="text-vyr-text-muted text-sm leading-relaxed text-center px-4">
-          {state.actionConsequence}
+        <p className="text-vyr-text-muted text-xs leading-relaxed text-center px-4 mt-2">
+          Registre aqui quando tomar o sachê para que o VYR acompanhe seu ciclo cognitivo.
         </p>
       </div>
 
