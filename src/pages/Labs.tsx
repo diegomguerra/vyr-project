@@ -2,10 +2,11 @@
 // Memória inteligente com ring gauges, cards visuais, gráfico de evolução e padrões
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Clock, FileText, Bell, TrendingUp } from "lucide-react";
-import type { Checkpoint, DailyReview, HistoryDay, DetectedPattern } from "@/lib/vyr-types";
+import { ChevronLeft, ChevronRight, Clock, FileText, Bell, TrendingUp, Brain, Zap, Eye, Shield } from "lucide-react";
+import type { Checkpoint, DailyReview, HistoryDay, DetectedPattern, MomentAction } from "@/lib/vyr-types";
 import { formatDate, formatDateShort, formatTime } from "@/lib/vyr-store";
 import { EvolutionChart, PatternCard } from "@/components/vyr";
+import { CognitivePerformanceCard, PhaseHistoryCard, type PerceptionRecord } from "@/components/vyr/CognitivePerformanceCard";
 
 type LabsTab = "historico" | "checkpoints" | "revisoes" | "sinais";
 
@@ -121,6 +122,28 @@ export default function Labs({
   onReviewTap,
 }: LabsProps) {
   const [activeTab, setActiveTab] = useState<LabsTab>("historico");
+  const [showTutorial, setShowTutorial] = useState(true);
+
+  // Determinar fase atual pela hora
+  const hour = new Date().getHours();
+  const currentPhase: MomentAction = hour >= 5 && hour < 11 ? "BOOT" : hour >= 11 && hour < 17 ? "HOLD" : "CLEAR";
+
+  // Mock perception records
+  const [perceptionRecords, setPerceptionRecords] = useState<PerceptionRecord[]>([
+    { id: "1", date: new Date().toISOString().slice(0, 10), phase: "BOOT", scores: { foco: 7, clareza: 6, energia: 8, estabilidade: 7 }, timestamp: new Date(new Date().setHours(8, 30)) },
+    { id: "2", date: new Date().toISOString().slice(0, 10), phase: "HOLD", scores: { foco: 6, clareza: 7, energia: 5, estabilidade: 6 }, timestamp: new Date(new Date().setHours(14, 0)) },
+  ]);
+
+  const handlePerceptionSubmit = (phase: MomentAction, scores: Record<string, number>) => {
+    const record: PerceptionRecord = {
+      id: Date.now().toString(),
+      date: new Date().toISOString().slice(0, 10),
+      phase,
+      scores,
+      timestamp: new Date(),
+    };
+    setPerceptionRecords((prev) => [record, ...prev]);
+  };
 
   // Config de sinais (mock)
   const [signals, setSignals] = useState({
@@ -234,43 +257,75 @@ export default function Labs({
           </div>
         )}
 
-        {/* Checkpoints */}
+        {/* Percepções */}
         {activeTab === "checkpoints" && (
-          <div className="space-y-4">
-            {/* Introdução contextual */}
-            <div className="bg-vyr-bg-surface/60 border border-vyr-stroke-divider/40 rounded-2xl p-4">
-              <p className="text-vyr-text-secondary text-sm leading-relaxed">
-                Suas percepções ajudam o sistema a entender como você se sente em diferentes momentos do dia. Quanto mais registros, mais precisos serão seus insights e recomendações.
-              </p>
-            </div>
-
-            {checkpoints.length === 0 ? (
-              <p className="text-vyr-text-muted text-center py-8">
-                Nenhuma percepção registrada ainda
-              </p>
-            ) : (
-              checkpoints.map((cp) => (
-                <div
-                  key={cp.id}
-                  className="px-4 py-4 bg-vyr-bg-surface rounded-2xl"
+          <div className="space-y-5">
+            {/* Tutorial rápido */}
+            {showTutorial && (
+              <div className="bg-vyr-bg-surface border border-vyr-accent-action/20 rounded-2xl p-5 relative">
+                <button
+                  onClick={() => setShowTutorial(false)}
+                  className="absolute top-3 right-3 text-vyr-text-muted text-xs hover:text-vyr-text-secondary"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="w-4 h-4 text-vyr-text-muted" />
-                    <span className="text-vyr-text-primary text-sm font-medium">
-                      {formatDateShort(cp.timestamp)} — {formatTime(cp.timestamp)}
-                    </span>
-                  </div>
-                  {cp.note ? (
-                    <p className="text-vyr-text-secondary text-base">
-                      {cp.note}
-                    </p>
-                  ) : (
-                    <p className="text-vyr-text-muted text-sm italic">
-                      Sem observação
-                    </p>
-                  )}
+                  Fechar
+                </button>
+                <div className="flex items-center gap-2 mb-3">
+                  <Brain className="w-4 h-4 text-vyr-accent-action" />
+                  <h3 className="text-vyr-text-primary text-sm font-semibold">Como funciona</h3>
                 </div>
-              ))
+                <div className="space-y-3 text-xs text-vyr-text-secondary leading-relaxed">
+                  <p>
+                    O algoritmo VYR combina <span className="text-vyr-text-primary font-medium">dados biométricos</span> do seu wearable com suas <span className="text-vyr-text-primary font-medium">percepções subjetivas</span> para calcular seu estado cognitivo real.
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 my-3">
+                    <div className="bg-vyr-bg-primary rounded-xl p-3 text-center">
+                      <Zap className="w-3.5 h-3.5 text-vyr-pillar-energia mx-auto mb-1" />
+                      <p className="text-[10px] font-semibold text-vyr-text-primary">Boot</p>
+                      <p className="text-[9px] text-vyr-text-muted">05h–11h</p>
+                    </div>
+                    <div className="bg-vyr-bg-primary rounded-xl p-3 text-center">
+                      <Eye className="w-3.5 h-3.5 text-vyr-accent-action mx-auto mb-1" />
+                      <p className="text-[10px] font-semibold text-vyr-text-primary">Hold</p>
+                      <p className="text-[9px] text-vyr-text-muted">11h–17h</p>
+                    </div>
+                    <div className="bg-vyr-bg-primary rounded-xl p-3 text-center">
+                      <Shield className="w-3.5 h-3.5 text-vyr-pillar-estabilidade mx-auto mb-1" />
+                      <p className="text-[10px] font-semibold text-vyr-text-primary">Clear</p>
+                      <p className="text-[9px] text-vyr-text-muted">17h–22h</p>
+                    </div>
+                  </div>
+                  <p>
+                    Registre sua percepção em cada fase do dia. Quanto mais registros, mais o sistema aprende seu padrão e melhora as recomendações.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Card de Performance Cognitiva */}
+            <CognitivePerformanceCard
+              currentPhase={currentPhase}
+              onSubmit={handlePerceptionSubmit}
+            />
+
+            {/* Histórico por fase/dia */}
+            <PhaseHistoryCard records={perceptionRecords} />
+
+            {/* Observações livres existentes */}
+            {checkpoints.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-vyr-text-primary text-sm font-medium">Observações livres</h3>
+                {checkpoints.map((cp) => (
+                  <div key={cp.id} className="px-4 py-3 bg-vyr-bg-surface rounded-2xl">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-3.5 h-3.5 text-vyr-text-muted" />
+                      <span className="text-vyr-text-muted text-xs">
+                        {formatDateShort(cp.timestamp)} — {formatTime(cp.timestamp)}
+                      </span>
+                    </div>
+                    {cp.note && <p className="text-vyr-text-secondary text-sm">{cp.note}</p>}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
