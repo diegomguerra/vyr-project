@@ -71,7 +71,7 @@ export default function Home({
     <div className="min-h-screen bg-vyr-bg-primary px-5 pt-6 pb-28 safe-area-top safe-area-left safe-area-right">
       {/* Connection Status + Bell + Saudação */}
       <div className="flex items-center justify-between mb-6 animate-fade-in">
-        <p className="text-vyr-text-secondary text-base">
+        <p className="text-vyr-text-secondary text-sm">
           {greeting}
         </p>
         <div className="flex items-center gap-1">
