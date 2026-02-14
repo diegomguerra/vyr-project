@@ -130,11 +130,12 @@ export default function Labs({
 
   // Mock perception records
   const [perceptionRecords, setPerceptionRecords] = useState<PerceptionRecord[]>([
-    { id: "1", date: new Date().toISOString().slice(0, 10), phase: "BOOT", scores: { foco: 7, clareza: 6, energia: 8, estabilidade: 7 }, timestamp: new Date(new Date().setHours(8, 30)) },
-    { id: "2", date: new Date().toISOString().slice(0, 10), phase: "HOLD", scores: { foco: 6, clareza: 7, energia: 5, estabilidade: 6 }, timestamp: new Date(new Date().setHours(14, 0)) },
+    { id: "1", date: new Date().toISOString().slice(0, 10), phase: "GERAL", scores: { foco: 7, clareza: 6, energia: 8, estabilidade: 7 }, timestamp: new Date(new Date().setHours(8, 30)) },
+    { id: "2", date: new Date().toISOString().slice(0, 10), phase: "BOOT", scores: { foco: 6, clareza: 7, energia: 5, estabilidade: 6 }, timestamp: new Date(new Date().setHours(9, 0)) },
+    { id: "3", date: new Date().toISOString().slice(0, 10), phase: "HOLD", scores: { foco: 7, clareza: 8, energia: 6, estabilidade: 7 }, timestamp: new Date(new Date().setHours(14, 0)) },
   ]);
 
-  const handlePerceptionSubmit = (phase: MomentAction, scores: Record<string, number>) => {
+  const handlePerceptionSubmit = (phase: MomentAction | "GERAL", scores: Record<string, number>) => {
     const record: PerceptionRecord = {
       id: Date.now().toString(),
       date: new Date().toISOString().slice(0, 10),
@@ -303,7 +304,6 @@ export default function Labs({
 
             {/* Card de Performance Cognitiva */}
             <CognitivePerformanceCard
-              currentPhase={currentPhase}
               onSubmit={handlePerceptionSubmit}
             />
 
