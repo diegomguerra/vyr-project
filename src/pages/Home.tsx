@@ -209,7 +209,7 @@ export default function Home({
         </div>
 
         <p className="text-vyr-accent-action text-xs font-medium text-center tracking-wide mb-2">
-          ⬇ Clique ao tomar o sachê
+          ⬇ Clique ao tomar {state.momentAction}
         </p>
         <ActionButton
           action={state.momentAction}
