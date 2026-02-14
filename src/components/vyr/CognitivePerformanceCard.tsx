@@ -230,10 +230,10 @@ export function PhaseHistoryCard({ records }: { records: PerceptionRecord[] }) {
   }, {});
 
   const phaseConfig: Record<string, { label: string; color: string }> = {
-    BOOT: { label: "Boot", color: "text-vyr-pillar-energia" },
-    HOLD: { label: "Hold", color: "text-vyr-accent-action" },
-    CLEAR: { label: "Clear", color: "text-vyr-pillar-estabilidade" },
-    GERAL: { label: "Geral", color: "text-vyr-text-secondary" },
+    BOOT: { label: "BOOT", color: "text-vyr-pillar-energia" },
+    HOLD: { label: "HOLD", color: "text-vyr-accent-action" },
+    CLEAR: { label: "CLEAR", color: "text-vyr-pillar-estabilidade" },
+    GERAL: { label: "GERAL", color: "text-vyr-text-secondary" },
   };
 
   const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
@@ -246,24 +246,26 @@ export function PhaseHistoryCard({ records }: { records: PerceptionRecord[] }) {
           <p className="text-vyr-text-primary text-xs font-medium mb-3">
             {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" })}
           </p>
-          <div className="space-y-2">
+          <div className="space-y-0">
             {byDate[date].map((rec) => {
               const cfg = phaseConfig[rec.phase] || phaseConfig.GERAL;
               const avg = Object.values(rec.scores).reduce((a, b) => a + b, 0) / Object.values(rec.scores).length;
               return (
-                <div key={rec.id} className="flex items-center justify-between py-1.5 border-b border-vyr-stroke-divider/20 last:border-0">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-bold tracking-widest uppercase ${cfg.color}`}>{cfg.label}</span>
-                    <span className="text-vyr-text-muted text-[10px]">
+                <div key={rec.id} className="flex items-center py-2.5 border-b border-vyr-stroke-divider/15 last:border-0">
+                  {/* Phase + time */}
+                  <div className="flex items-center gap-2 w-[120px] flex-shrink-0">
+                    <span className={`text-[11px] font-bold tracking-wider ${cfg.color}`}>{cfg.label}</span>
+                    <span className="text-vyr-text-muted text-[11px] tabular-nums">
                       {rec.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-[10px]">
-                    <span className="text-vyr-text-muted">F:{rec.scores.foco}</span>
-                    <span className="text-vyr-text-muted">C:{rec.scores.clareza}</span>
-                    <span className="text-vyr-text-muted">E:{rec.scores.energia}</span>
-                    <span className="text-vyr-text-muted">Es:{rec.scores.estabilidade}</span>
-                    <span className="text-vyr-text-primary font-semibold text-xs">{avg.toFixed(1)}</span>
+                  {/* Scores */}
+                  <div className="flex items-center gap-3 flex-1 justify-end">
+                    <span className="text-vyr-text-muted text-[11px] tabular-nums">F:{rec.scores.foco}</span>
+                    <span className="text-vyr-text-muted text-[11px] tabular-nums">C:{rec.scores.clareza}</span>
+                    <span className="text-vyr-text-muted text-[11px] tabular-nums">E:{rec.scores.energia}</span>
+                    <span className="text-vyr-text-muted text-[11px] tabular-nums">Es:{rec.scores.estabilidade}</span>
+                    <span className="text-vyr-text-primary font-semibold text-sm tabular-nums ml-1">{avg.toFixed(1)}</span>
                   </div>
                 </div>
               );
