@@ -132,7 +132,7 @@ export default function Labs({
 
   const tabs: { id: LabsTab; label: string }[] = [
     { id: "historico", label: "Histórico" },
-    { id: "checkpoints", label: "Checkpoints" },
+    { id: "checkpoints", label: "Percepções" },
     { id: "revisoes", label: "Revisões" },
     { id: "sinais", label: "Sinais" },
   ];
@@ -236,10 +236,17 @@ export default function Labs({
 
         {/* Checkpoints */}
         {activeTab === "checkpoints" && (
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Introdução contextual */}
+            <div className="bg-vyr-bg-surface/60 border border-vyr-stroke-divider/40 rounded-2xl p-4">
+              <p className="text-vyr-text-secondary text-sm leading-relaxed">
+                Suas percepções ajudam o sistema a entender como você se sente em diferentes momentos do dia. Quanto mais registros, mais precisos serão seus insights e recomendações.
+              </p>
+            </div>
+
             {checkpoints.length === 0 ? (
               <p className="text-vyr-text-muted text-center py-8">
-                Nenhum checkpoint registrado
+                Nenhuma percepção registrada ainda
               </p>
             ) : (
               checkpoints.map((cp) => (
