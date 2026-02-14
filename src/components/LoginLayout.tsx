@@ -43,8 +43,8 @@ export function LoginLayout({
               <h2 className="text-xl font-semibold text-[#ECEEF2] font-mono tracking-wide">
                 VYR App
               </h2>
-              <p className="text-xs text-[#A7ADB8] font-mono mt-1">
-                Performance cognitiva mensurável
+              <p className="text-xs text-[#A7ADB8] font-mono mt-1 whitespace-nowrap">
+                Performance cognitiva
               </p>
             </div>
           </div>
