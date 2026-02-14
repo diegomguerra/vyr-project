@@ -140,9 +140,70 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          insights_enabled: boolean
+          push_enabled: boolean
+          reminders_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          insights_enabled?: boolean
+          push_enabled?: boolean
+          reminders_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          insights_enabled?: boolean
+          push_enabled?: boolean
+          reminders_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read?: boolean
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       participantes: {
         Row: {
           altura_cm: number | null
+          avatar_url: string | null
           codigo: string
           condicoes_saude: string[] | null
           consumo_alcool: string | null
@@ -174,6 +235,7 @@ export type Database = {
         }
         Insert: {
           altura_cm?: number | null
+          avatar_url?: string | null
           codigo: string
           condicoes_saude?: string[] | null
           consumo_alcool?: string | null
@@ -207,6 +269,7 @@ export type Database = {
         }
         Update: {
           altura_cm?: number | null
+          avatar_url?: string | null
           codigo?: string
           condicoes_saude?: string[] | null
           consumo_alcool?: string | null
@@ -236,6 +299,33 @@ export type Database = {
             | null
           sexo?: Database["public"]["Enums"]["sexo_tipo"] | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
           user_id?: string
         }
         Relationships: []

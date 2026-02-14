@@ -2,6 +2,7 @@
 // Ring central + 3 pilares + Contexto + Insight + Janela Cognitiva + Ação
 
 import { ChevronRight } from "lucide-react";
+import { NotificationBell } from "@/components/vyr";
 import { 
   StateRing, 
   PillarRing, 
@@ -35,12 +36,14 @@ interface HomeProps {
   suggestedTransition?: SuggestedTransition;
   sachetConfirmation?: SachetConfirmationType | null;
   wearableConnection: WearableConnection;
+  notificationCount?: number;
   onScoreTap: () => void;
   onActionTap: () => void;
   onActivateTransition?: (action: MomentAction) => void;
   onDismissConfirmation?: () => void;
   onAddObservation?: () => void;
   onConnectionTap?: () => void;
+  onNotificationsTap?: () => void;
 }
 
 export default function Home({ 
@@ -52,27 +55,32 @@ export default function Home({
   suggestedTransition,
   sachetConfirmation,
   wearableConnection,
+  notificationCount = 0,
   onScoreTap, 
   onActionTap,
   onActivateTransition,
   onDismissConfirmation,
   onAddObservation,
   onConnectionTap,
+  onNotificationsTap,
 }: HomeProps) {
   // Pegar score de ontem para o delta
   const yesterdayScore = historyByDay.length > 1 ? historyByDay[1].score : state.vyrStateScore;
 
   return (
     <div className="min-h-screen bg-vyr-bg-primary px-5 pt-6 pb-28 safe-area-top safe-area-left safe-area-right">
-      {/* Connection Status + Saudação */}
+      {/* Connection Status + Bell + Saudação */}
       <div className="flex items-center justify-between mb-6 animate-fade-in">
         <p className="text-vyr-text-secondary text-base">
           {greeting}
         </p>
-        <ConnectionStatus 
-          connection={wearableConnection} 
-          onTap={onConnectionTap} 
-        />
+        <div className="flex items-center gap-1">
+          <NotificationBell unreadCount={notificationCount} onClick={onNotificationsTap || (() => {})} />
+          <ConnectionStatus 
+            connection={wearableConnection} 
+            onTap={onConnectionTap} 
+          />
+        </div>
       </div>
 
       {/* RING CENTRAL - VYR STATE */}

@@ -17,3 +17,7 @@ export { SachetConfirmation } from "./SachetConfirmation";
 // Wearable connection
 export { default as ConnectionStatus } from "./ConnectionStatus";
 export { default as WearableConnected } from "./WearableConnected";
+
+// Notifications & Profile
+export { NotificationBell } from "./NotificationBell";
+export { AvatarUpload } from "./AvatarUpload";

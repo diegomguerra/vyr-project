@@ -16,12 +16,16 @@ import WearableSetup from "./pages/WearableSetup";
 import WearablePermissions from "./pages/WearablePermissions";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
-import { WearableConnected } from "./components/vyr";
+import Notifications from "./pages/Notifications";
+import Profile from "./pages/Profile";
+import { WearableConnected, NotificationBell } from "./components/vyr";
 import { useVYRStore, getGreeting } from "./lib/vyr-store";
 import { useAuth } from "./hooks/use-auth";
-import type { DailyReview as DailyReviewType, WearableProvider } from "./lib/vyr-types";
+import { useNotifications } from "./hooks/use-notifications";
 
 const queryClient = new QueryClient();
+
+import type { DailyReview as DailyReviewType, WearableProvider } from "./lib/vyr-types";
 
 // Tipo de tela ativa
 type Screen = 
@@ -33,7 +37,9 @@ type Screen =
   | "labs"
   | "wearableSetup"
   | "wearablePermissions"
-  | "settings";
+  | "settings"
+  | "notifications"
+  | "profile";
 
 function VYRApp() {
   const [screen, setScreen] = useState<Screen>("home");
@@ -41,6 +47,7 @@ function VYRApp() {
   const [showCheckpoint, setShowCheckpoint] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<WearableProvider | null>(null);
   const [showWearableConnected, setShowWearableConnected] = useState(false);
+  const { unreadCount } = useNotifications();
 
   const {
     state,
@@ -71,6 +78,8 @@ function VYRApp() {
   const goLabs = useCallback(() => setScreen("labs"), []);
   const goSettings = useCallback(() => setScreen("settings"), []);
   const goWearableSetup = useCallback(() => setScreen("wearableSetup"), []);
+  const goNotifications = useCallback(() => setScreen("notifications"), []);
+  const goProfile = useCallback(() => setScreen("profile"), []);
 
   // Handler de ação confirmada
   const handleActionConfirm = useCallback(() => {
@@ -174,6 +183,8 @@ function VYRApp() {
           onDismissConfirmation={dismissConfirmation}
           onAddObservation={handleAddObservation}
           onConnectionTap={handleConnectionTap}
+          notificationCount={unreadCount}
+          onNotificationsTap={goNotifications}
         />
       )}
 
@@ -225,7 +236,17 @@ function VYRApp() {
           onBack={goHome}
           onReconnect={handleReconnect}
           onDisconnect={handleDisconnect}
+          onGoProfile={goProfile}
+          onGoNotifications={goNotifications}
         />
+      )}
+
+      {screen === "notifications" && (
+        <Notifications onBack={goHome} />
+      )}
+
+      {screen === "profile" && (
+        <Profile onBack={goSettings} />
       )}
 
       {/* Bottom Nav */}
