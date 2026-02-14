@@ -1,7 +1,6 @@
 // VYR Labs - Action Button
 // Botão principal de ação com ícone e glow
 
-import { Play } from "lucide-react";
 import type { MomentAction } from "@/lib/vyr-types";
 
 interface ActionButtonProps {
@@ -9,6 +8,8 @@ interface ActionButtonProps {
   action: MomentAction;
   /** Texto do botão */
   label: string;
+  /** Subtexto abaixo do label */
+  subtitle?: string;
   /** Callback ao clicar */
   onTap: () => void;
   /** Desabilitado */
@@ -24,10 +25,10 @@ const ACTION_COLORS: Record<MomentAction, string> = {
 export function ActionButton({ 
   action, 
   label, 
+  subtitle,
   onTap,
   disabled = false 
 }: ActionButtonProps) {
-  const Icon = Play;
   const colorClass = ACTION_COLORS[action];
 
   return (
@@ -35,10 +36,9 @@ export function ActionButton({
       onClick={onTap}
       disabled={disabled}
       className={`
-        w-full flex items-center justify-center gap-3
+        w-full flex flex-col items-center justify-center
         px-6 py-4 rounded-xl
-        text-white font-medium text-base
-        transition-all duration-200
+        text-white transition-all duration-200
         active:scale-[0.98]
         disabled:opacity-50 disabled:cursor-not-allowed
         ${colorClass}
@@ -51,8 +51,10 @@ export function ActionButton({
         }`,
       }}
     >
-      <Icon className="w-5 h-5" fill="currentColor" />
-      <span>{label}</span>
+      <span className="font-medium text-base">{label}</span>
+      {subtitle && (
+        <span className="text-white/80 text-xs mt-1">{subtitle}</span>
+      )}
     </button>
   );
 }

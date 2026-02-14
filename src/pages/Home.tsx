@@ -208,12 +208,10 @@ export default function Home({
           </p>
         </div>
 
-        <p className="text-vyr-accent-action text-xs font-medium text-center tracking-wide mb-2">
-          ⬇ Clique ao tomar {state.momentAction}
-        </p>
         <ActionButton
           action={state.momentAction}
           label={state.momentAction}
+          subtitle={`Clique ao tomar ${state.momentAction}`}
           onTap={onActionTap}
         />
         
