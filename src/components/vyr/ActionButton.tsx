@@ -1,6 +1,7 @@
 // VYR Labs - Action Button
 // Botão principal de ação com ícone e glow
 
+import { Play } from "lucide-react";
 import type { MomentAction } from "@/lib/vyr-types";
 
 interface ActionButtonProps {
@@ -51,7 +52,10 @@ export function ActionButton({
         }`,
       }}
     >
-      <span className="font-medium text-base">{label}</span>
+      <div className="flex items-center justify-center gap-2">
+        <Play className="w-4 h-4" fill="currentColor" />
+        <span className="font-medium text-base">{label}</span>
+      </div>
       {subtitle && (
         <span className="text-white/80 text-xs mt-1">{subtitle}</span>
       )}
