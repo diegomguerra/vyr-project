@@ -219,7 +219,7 @@ export interface PerceptionRecord {
   timestamp: Date;
 }
 
-// Phase history card
+// Phase history card — daily summary view
 export function PhaseHistoryCard({ records }: { records: PerceptionRecord[] }) {
   if (records.length === 0) return null;
 
@@ -229,50 +229,75 @@ export function PhaseHistoryCard({ records }: { records: PerceptionRecord[] }) {
     return acc;
   }, {});
 
-  const phaseConfig: Record<string, { label: string; color: string }> = {
-    BOOT: { label: "BOOT", color: "text-vyr-pillar-energia" },
-    HOLD: { label: "HOLD", color: "text-vyr-accent-action" },
-    CLEAR: { label: "CLEAR", color: "text-vyr-pillar-estabilidade" },
-    GERAL: { label: "GERAL", color: "text-vyr-text-secondary" },
-  };
-
   const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
+
+  const PILLARS = [
+    { key: "foco", short: "F", full: "Foco" },
+    { key: "clareza", short: "C", full: "Clareza" },
+    { key: "energia", short: "E", full: "Energia" },
+    { key: "estabilidade", short: "Es", full: "Estabilidade" },
+  ];
 
   return (
     <div className="space-y-3">
       <h3 className="text-vyr-text-primary text-sm font-medium">Histórico de percepções</h3>
-      {dates.map((date) => (
-        <div key={date} className="bg-vyr-bg-surface rounded-2xl p-4 border border-vyr-stroke-divider/20">
-          <p className="text-vyr-text-primary text-xs font-medium mb-3">
-            {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" })}
-          </p>
-          <div className="space-y-0">
-            {byDate[date].map((rec) => {
-              const cfg = phaseConfig[rec.phase] || phaseConfig.GERAL;
-              const avg = Object.values(rec.scores).reduce((a, b) => a + b, 0) / Object.values(rec.scores).length;
-              return (
-                <div key={rec.id} className="flex items-center py-2.5 border-b border-vyr-stroke-divider/15 last:border-0">
-                  {/* Phase + time */}
-                  <div className="flex items-center gap-2 w-[120px] flex-shrink-0">
-                    <span className={`text-[11px] font-bold tracking-wider ${cfg.color}`}>{cfg.label}</span>
-                    <span className="text-vyr-text-muted text-[11px] tabular-nums">
-                      {rec.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
-                  {/* Scores */}
-                  <div className="flex items-center gap-3 flex-1 justify-end">
-                    <span className="text-vyr-text-muted text-[11px] tabular-nums">F:{rec.scores.foco}</span>
-                    <span className="text-vyr-text-muted text-[11px] tabular-nums">C:{rec.scores.clareza}</span>
-                    <span className="text-vyr-text-muted text-[11px] tabular-nums">E:{rec.scores.energia}</span>
-                    <span className="text-vyr-text-muted text-[11px] tabular-nums">Es:{rec.scores.estabilidade}</span>
-                    <span className="text-vyr-text-primary font-semibold text-sm tabular-nums ml-1">{avg.toFixed(1)}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+
+      {/* Legend */}
+      <div className="bg-vyr-bg-surface/60 rounded-xl px-3 py-2.5 border border-vyr-stroke-divider/10">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          {PILLARS.map((p) => (
+            <span key={p.key} className="text-[10px] text-vyr-text-muted">
+              <span className="font-bold text-vyr-text-secondary">{p.short}</span> {p.full}
+            </span>
+          ))}
         </div>
-      ))}
+        <p className="text-[10px] text-vyr-text-muted mt-1">
+          <span className="font-bold text-vyr-accent-action">Média</span> — resultado final da sua percepção no dia
+        </p>
+      </div>
+
+      {dates.map((date) => {
+        const dayRecords = byDate[date];
+        const hasGeral = dayRecords.some((r) => r.phase === "GERAL");
+        const phaseCount = dayRecords.filter((r) => r.phase !== "GERAL").length;
+        const modeLabel = hasGeral ? "Geral" : `${phaseCount} fase${phaseCount !== 1 ? "s" : ""}`;
+
+        // Average all scores across the day
+        const avgScores: Record<string, number> = {};
+        PILLARS.forEach((p) => {
+          const vals = dayRecords.map((r) => r.scores[p.key]).filter((v) => v !== undefined);
+          avgScores[p.key] = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+        });
+        const finalAvg = Object.values(avgScores).reduce((a, b) => a + b, 0) / Object.values(avgScores).length;
+
+        return (
+          <div key={date} className="bg-vyr-bg-surface rounded-2xl p-4 border border-vyr-stroke-divider/20">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-vyr-text-primary text-xs font-medium">
+                {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" })}
+              </p>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-vyr-bg-primary text-vyr-text-muted">
+                {modeLabel}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {PILLARS.map((p) => (
+                  <div key={p.key} className="text-center">
+                    <span className="text-vyr-text-muted text-[10px] font-semibold block">{p.short}</span>
+                    <span className="text-vyr-text-primary text-sm tabular-nums font-medium">{avgScores[p.key].toFixed(1)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center pl-3 border-l border-vyr-stroke-divider/30">
+                <span className="text-vyr-text-muted text-[10px] block">Média</span>
+                <span className="text-vyr-accent-action text-lg font-bold tabular-nums">{finalAvg.toFixed(1)}</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
