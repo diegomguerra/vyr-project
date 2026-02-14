@@ -230,33 +230,39 @@ function VYRApp() {
 
       {/* Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 bg-vyr-bg-primary border-t border-vyr-stroke-divider safe-area-bottom z-20">
-        <div className="flex justify-around max-w-md mx-auto px-6 py-2">
+        <div className="flex justify-around max-w-md mx-auto px-4 py-3">
           <button
             onClick={goHome}
-            className={`flex flex-col items-center gap-1 px-5 py-2 transition-colors ${
-              screen === "home" ? "text-vyr-text-primary" : "text-vyr-text-muted/60"
+            className={`flex flex-col items-center gap-1.5 px-6 py-1.5 rounded-lg transition-all ${
+              screen === "home" 
+                ? "text-vyr-text-primary" 
+                : "text-vyr-text-secondary hover:text-vyr-text-primary"
             }`}
           >
-            <HomeIcon className="w-[18px] h-[18px]" strokeWidth={screen === "home" ? 2 : 1.5} />
-            <span className="text-[10px] tracking-wide">Home</span>
+            <HomeIcon className="w-6 h-6" strokeWidth={screen === "home" ? 2.2 : 1.8} />
+            <span className="text-[11px] font-medium tracking-wide">Home</span>
           </button>
           <button
             onClick={goLabs}
-            className={`flex flex-col items-center gap-1 px-5 py-2 transition-colors ${
-              screen === "labs" || screen === "dayReview" ? "text-vyr-text-primary" : "text-vyr-text-muted/60"
+            className={`flex flex-col items-center gap-1.5 px-6 py-1.5 rounded-lg transition-all ${
+              screen === "labs" || screen === "dayReview" 
+                ? "text-vyr-text-primary" 
+                : "text-vyr-text-secondary hover:text-vyr-text-primary"
             }`}
           >
-            <FlaskConical className="w-[18px] h-[18px]" strokeWidth={screen === "labs" || screen === "dayReview" ? 2 : 1.5} />
-            <span className="text-[10px] tracking-wide">Labs</span>
+            <FlaskConical className="w-6 h-6" strokeWidth={screen === "labs" || screen === "dayReview" ? 2.2 : 1.8} />
+            <span className="text-[11px] font-medium tracking-wide">Labs</span>
           </button>
           <button
             onClick={goSettings}
-            className={`flex flex-col items-center gap-1 px-5 py-2 transition-colors ${
-              screen === "settings" ? "text-vyr-text-primary" : "text-vyr-text-muted/60"
+            className={`flex flex-col items-center gap-1.5 px-6 py-1.5 rounded-lg transition-all ${
+              screen === "settings" 
+                ? "text-vyr-text-primary" 
+                : "text-vyr-text-secondary hover:text-vyr-text-primary"
             }`}
           >
-            <SettingsIcon className="w-[18px] h-[18px]" strokeWidth={screen === "settings" ? 2 : 1.5} />
-            <span className="text-[10px] tracking-wide">Config</span>
+            <SettingsIcon className="w-6 h-6" strokeWidth={screen === "settings" ? 2.2 : 1.8} />
+            <span className="text-[11px] font-medium tracking-wide">Config</span>
           </button>
         </div>
       </nav>
