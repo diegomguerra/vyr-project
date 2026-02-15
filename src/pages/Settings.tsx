@@ -1,6 +1,6 @@
 // VYR Labs - Settings Page
 
-import { ChevronLeft, Watch, RefreshCw, Unlink, Shield, Database, LogOut, User, Bell, ChevronRight } from "lucide-react";
+import { ChevronLeft, Watch, RefreshCw, Unlink, Shield, Database, LogOut, User, Bell, ChevronRight, Plug } from "lucide-react";
 import { signOut } from "@/hooks/use-auth";
 import { Switch } from "@/components/ui/switch";
 import { useNotificationPreferences } from "@/hooks/use-notifications";
@@ -13,6 +13,7 @@ interface SettingsProps {
   onDisconnect: () => void;
   onGoProfile: () => void;
   onGoNotifications: () => void;
+  onGoIntegrations: () => void;
 }
 
 const PROVIDER_NAMES: Record<WearableProvider, string> = {
@@ -31,7 +32,7 @@ function formatLastSync(date: Date | null): string {
   return "há mais de 24 horas";
 }
 
-export default function Settings({ connection, onBack, onReconnect, onDisconnect, onGoProfile, onGoNotifications }: SettingsProps) {
+export default function Settings({ connection, onBack, onReconnect, onDisconnect, onGoProfile, onGoNotifications, onGoIntegrations }: SettingsProps) {
   const providerName = connection.provider ? PROVIDER_NAMES[connection.provider] : "Nenhum";
   const lastSyncText = formatLastSync(connection.lastSync);
   const { prefs, updatePref } = useNotificationPreferences();
@@ -88,6 +89,23 @@ export default function Settings({ connection, onBack, onReconnect, onDisconnect
             <Switch checked={prefs.reminders_enabled} onCheckedChange={(v) => updatePref("reminders_enabled", v)} />
           </div>
         </div>
+      </section>
+
+      {/* Integrations Link */}
+      <section className="mb-8 animate-fade-in" style={{ animationDelay: "80ms" }}>
+        <h2 className="text-vyr-text-muted text-xs font-medium tracking-wider uppercase mb-4">Integrações</h2>
+        <button onClick={onGoIntegrations} className="w-full bg-vyr-bg-surface rounded-2xl p-4 flex items-center gap-3 transition-all active:scale-[0.98]">
+          <div className="w-10 h-10 rounded-xl bg-vyr-bg-primary flex items-center justify-center">
+            <Plug className="w-5 h-5 text-vyr-accent-action" />
+          </div>
+          <div className="flex-1 text-left">
+            <span className="text-vyr-text-primary font-medium block">Dispositivos</span>
+            <span className="text-vyr-text-muted text-sm">
+              {connection.connected ? `${connection.provider === "apple_health" ? "Apple Health" : "Wearable"} conectado` : "Nenhum conectado"}
+            </span>
+          </div>
+          <ChevronRight className="w-5 h-5 text-vyr-text-muted" />
+        </button>
       </section>
 
       {/* Wearable Section */}

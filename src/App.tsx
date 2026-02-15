@@ -15,6 +15,7 @@ import Labs from "./pages/Labs";
 import WearableSetup from "./pages/WearableSetup";
 import WearablePermissions from "./pages/WearablePermissions";
 import Settings from "./pages/Settings";
+import Integrations from "./pages/Integrations";
 import Login from "./pages/Login";
 import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
@@ -39,7 +40,8 @@ type Screen =
   | "wearablePermissions"
   | "settings"
   | "notifications"
-  | "profile";
+  | "profile"
+  | "integrations";
 
 function VYRApp() {
   const [screen, setScreen] = useState<Screen>("home");
@@ -80,6 +82,7 @@ function VYRApp() {
   const goWearableSetup = useCallback(() => setScreen("wearableSetup"), []);
   const goNotifications = useCallback(() => setScreen("notifications"), []);
   const goProfile = useCallback(() => setScreen("profile"), []);
+  const goIntegrations = useCallback(() => setScreen("integrations"), []);
 
   // Handler de ação confirmada
   const handleActionConfirm = useCallback(() => {
@@ -238,6 +241,21 @@ function VYRApp() {
           onDisconnect={handleDisconnect}
           onGoProfile={goProfile}
           onGoNotifications={goNotifications}
+          onGoIntegrations={goIntegrations}
+        />
+      )}
+
+      {screen === "integrations" && (
+        <Integrations
+          connection={wearableConnection}
+          onBack={goSettings}
+          onConnectAppleHealth={() => {
+            connectWearable("apple_health");
+          }}
+          onDisconnectAppleHealth={() => {
+            disconnectWearable();
+          }}
+          onSelectProvider={handleSelectProvider}
         />
       )}
 
