@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { ChevronLeft, Heart, Activity, Moon, Footprints, Dumbbell, Check, Info, Loader2 } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
 import type { WearableConnection, WearableProvider } from "@/lib/vyr-types";
 import { connectAppleHealth, disconnectAppleHealth, syncHealthKitData } from "@/lib/healthkit-sync";
-import { isHealthKitAvailable } from "@/lib/healthkit";
 import { toast } from "sonner";
 
 interface IntegrationsProps {
@@ -52,13 +52,13 @@ export default function Integrations({
   const isJStyleConnected = connection.connected && connection.provider === "jstyle";
 
   const handleConnect = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      toast.info("Abra o app no seu iPhone para conectar o Apple Health.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const available = await isHealthKitAvailable();
-      if (!available) {
-        toast.info("HealthKit disponível apenas no dispositivo iOS.");
-        return;
-      }
       const result = await connectAppleHealth();
       if (result.success) {
         onConnectAppleHealth();
