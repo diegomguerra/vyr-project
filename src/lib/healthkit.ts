@@ -1,28 +1,24 @@
 // VYR Labs - Apple Health (HealthKit) Integration via Capacitor
-// Uses @perfood/capacitor-healthkit plugin
+// Uses @capgo/capacitor-health plugin (Capacitor 8 compatible)
 // Gracefully falls back on web (returns unavailable)
 
 import { Capacitor } from "@capacitor/core";
-import { CapacitorHealthkit, type OtherData } from "@perfood/capacitor-healthkit";
+import { Health, type HealthSample } from "@capgo/capacitor-health";
 import type { WearableData } from "./vyr-types";
 
 // ============================================================
-// Constants – sample type identifiers (plugin enum values)
+// Constants – data type identifiers for @capgo/capacitor-health
 // ============================================================
 
-const HK_TYPES = {
-  HEART_RATE: "heartRate",
-  HRV: "heartRateVariabilitySDNN",
-  RESTING_HR: "restingHeartRate",
-  SLEEP: "sleepAnalysis",
-  STEPS: "stepCount",
-  SPO2: "oxygenSaturation",
-  BODY_TEMP: "bodyTemperature",
-  RESPIRATORY: "respiratoryRate",
-  WORKOUT: "workoutType",
-} as const;
-
-const ALL_READ_TYPES = Object.values(HK_TYPES);
+const READ_SCOPES = [
+  "heartRate",
+  "restingHeartRate",
+  "heartRateVariability",
+  "sleep",
+  "steps",
+  "oxygenSaturation",
+  "respiratoryRate",
+] as const;
 
 // ============================================================
 // Public API
@@ -32,8 +28,8 @@ const ALL_READ_TYPES = Object.values(HK_TYPES);
 export async function isHealthKitAvailable(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
   try {
-    await CapacitorHealthkit.isAvailable();
-    return true;
+    const { available } = await Health.isAvailable();
+    return available;
   } catch {
     return false;
   }
@@ -43,13 +39,10 @@ export async function isHealthKitAvailable(): Promise<boolean> {
 export async function requestHealthKitPermissions(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
   try {
-    await CapacitorHealthkit.requestAuthorization({
-      all: [],
-      read: [...ALL_READ_TYPES],
+    await Health.requestAuthorization({
+      read: [...READ_SCOPES],
       write: [],
     });
-    // The plugin doesn't expose a reliable "isAuthorized" for read;
-    // after the prompt, we assume success (denied = empty query results).
     return true;
   } catch (err) {
     console.error("[HealthKit] Permission request failed:", err);
@@ -59,15 +52,14 @@ export async function requestHealthKitPermissions(): Promise<boolean> {
 
 /** Check if permissions are currently authorized (best-effort) */
 export async function isHealthKitAuthorized(): Promise<boolean> {
-  // The plugin has no read-auth check; we just verify availability.
   return isHealthKitAvailable();
 }
 
 // ============================================================
-// Data Reading – pulls last 24h and maps to WearableData
+// Data Reading – pulls a day of biometric data → WearableData
 // ============================================================
 
-/** Read the last 24h of biometric data and return a VYR WearableData object */
+/** Read a day of biometric data and return a VYR WearableData object */
 export async function readHealthKitData(
   dateStr?: string
 ): Promise<WearableData | null> {
@@ -84,27 +76,26 @@ export async function readHealthKitData(
   const isoDate = targetDate.toISOString().slice(0, 10);
 
   try {
-    const [hrData, hrvData, restingHRData, sleepData, stepsData, spo2Data, tempData] =
+    const [hrData, hrvData, restingHRData, sleepData, stepsData, spo2Data] =
       await Promise.all([
-        querySafe(HK_TYPES.HEART_RATE, start, end),
-        querySafe(HK_TYPES.HRV, start, end),
-        querySafe(HK_TYPES.RESTING_HR, start, end),
-        querySafe(HK_TYPES.SLEEP, start, end),
-        querySafe(HK_TYPES.STEPS, start, end),
-        querySafe(HK_TYPES.SPO2, start, end),
-        querySafe(HK_TYPES.BODY_TEMP, start, end),
+        readSafe("heartRate", start, end),
+        readSafe("heartRateVariability", start, end),
+        readSafe("restingHeartRate", start, end),
+        readSafe("sleep", start, end),
+        readSafe("steps", start, end),
+        readSafe("oxygenSaturation", start, end),
       ]);
 
-    // Process heart rate → resting HR
+    // Resting heart rate
     const rhr = restingHRData.length > 0
-      ? avg(restingHRData.map((s) => s.value ?? 0))
+      ? avg(restingHRData.map((s) => s.value))
       : hrData.length > 0
-      ? Math.min(...hrData.map((s) => s.value ?? 999))
+      ? Math.min(...hrData.map((s) => s.value))
       : undefined;
 
-    // Process HRV (SDNN in ms)
+    // HRV (SDNN in ms)
     const hrvRawMs = hrvData.length > 0
-      ? avg(hrvData.map((s) => s.value ?? 0))
+      ? avg(hrvData.map((s) => s.value))
       : undefined;
 
     // Normalize HRV to 0-100 index
@@ -117,16 +108,12 @@ export async function readHealthKitData(
     // SpO2 (stored as fraction 0-1 in HealthKit, convert to %)
     const spo2 = spo2Data.length > 0
       ? avg(spo2Data.map((s) => {
-          const v = s.value ?? 0;
+          const v = s.value;
           return v <= 1 ? v * 100 : v;
         }))
       : undefined;
 
-    const bodyTemperature = tempData.length > 0
-      ? avg(tempData.map((s) => s.value ?? 0))
-      : undefined;
-
-    const totalSteps = stepsData.reduce((sum, s) => sum + (s.value ?? 0), 0);
+    const totalSteps = stepsData.reduce((sum, s) => sum + s.value, 0);
     const previousDayActivity = totalSteps > 12000
       ? ("high" as const)
       : totalSteps > 6000
@@ -142,7 +129,6 @@ export async function readHealthKitData(
       ...(sleepInfo.quality !== undefined && { sleepQuality: sleepInfo.quality }),
       ...(sleepInfo.awakenings !== undefined && { awakenings: sleepInfo.awakenings }),
       ...(spo2 !== undefined && { spo2: Math.round(spo2 * 10) / 10 }),
-      ...(bodyTemperature !== undefined && { bodyTemperature: Math.round(bodyTemperature * 10) / 10 }),
       previousDayActivity,
     };
 
@@ -157,29 +143,21 @@ export async function readHealthKitData(
 // Internal Helpers
 // ============================================================
 
-interface RawSample {
-  value?: number;
-  startDate?: string;
-  endDate?: string;
-  source?: string;
-  [key: string]: any;
-}
-
-async function querySafe(
-  sampleName: string,
+async function readSafe(
+  dataType: typeof READ_SCOPES[number],
   startDate: string,
   endDate: string,
   limit = 1000
-): Promise<RawSample[]> {
+): Promise<HealthSample[]> {
   if (!Capacitor.isNativePlatform()) return [];
   try {
-    const { resultData } = await CapacitorHealthkit.queryHKitSampleType<OtherData>({
-      sampleName,
+    const { samples } = await Health.readSamples({
+      dataType,
       startDate,
       endDate,
       limit,
     });
-    return resultData ?? [];
+    return samples ?? [];
   } catch {
     return [];
   }
@@ -196,16 +174,16 @@ interface SleepInfo {
   awakenings?: number;
 }
 
-function processSleep(samples: RawSample[]): SleepInfo {
+function processSleep(samples: HealthSample[]): SleepInfo {
   if (samples.length === 0) return {};
 
-  // HealthKit sleep values: 0=InBed, 1=Asleep, 2=Awake, 3=Core, 4=Deep, 5=REM
+  // @capgo/capacitor-health uses sleepState: 'inBed' | 'asleep' | 'awake' | 'rem' | 'deep' | 'light'
   const asleepSamples = samples.filter((s) => {
-    const v = s.value ?? 0;
-    return v >= 1 && v !== 2;
+    const state = s.sleepState;
+    return state && state !== "awake" && state !== "inBed";
   });
 
-  const awakeSamples = samples.filter((s) => (s.value ?? 0) === 2);
+  const awakeSamples = samples.filter((s) => s.sleepState === "awake");
 
   let totalSleepMs = 0;
   for (const s of asleepSamples) {
@@ -216,8 +194,8 @@ function processSleep(samples: RawSample[]): SleepInfo {
   const duration = totalSleepMs > 0 ? totalSleepMs / (1000 * 60 * 60) : undefined;
 
   const deepRemSamples = samples.filter((s) => {
-    const v = s.value ?? 0;
-    return v === 4 || v === 5;
+    const state = s.sleepState;
+    return state === "deep" || state === "rem";
   });
   let deepRemMs = 0;
   for (const s of deepRemSamples) {
