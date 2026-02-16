@@ -1,7 +1,6 @@
 // VYR Labs - Integrations Page
 
-import { useState, useCallback } from "react";
-import { ChevronLeft, Heart, Activity, Moon, Footprints, Dumbbell, Check, ChevronRight } from "lucide-react";
+import { ChevronLeft, Heart, Activity, Moon, Footprints, Dumbbell, Check, Info } from "lucide-react";
 import type { WearableConnection, WearableProvider } from "@/lib/vyr-types";
 
 interface IntegrationsProps {
@@ -27,25 +26,6 @@ const HEALTH_DATA_TYPES: HealthDataType[] = [
   { id: "workouts", label: "Treinos", icon: <Dumbbell className="w-4 h-4" />, authorized: true },
 ];
 
-const OTHER_PROVIDERS: { id: WearableProvider; name: string }[] = [
-  { id: "garmin", name: "Garmin" },
-  { id: "whoop", name: "Whoop" },
-  { id: "fitbit", name: "Fitbit" },
-  { id: "samsung", name: "Samsung Galaxy Watch" },
-  { id: "oura", name: "Oura Ring" },
-  { id: "ringconn", name: "RingConn" },
-  { id: "ultrahuman", name: "Ultrahuman Ring" },
-  { id: "polar", name: "Polar" },
-  { id: "xiaomi", name: "Xiaomi Mi Band" },
-  { id: "huawei", name: "Huawei Watch" },
-  { id: "amazfit", name: "Amazfit" },
-  { id: "google_fit", name: "Google Fit" },
-  { id: "circular", name: "Circular Ring" },
-  { id: "movano", name: "Movano Evie" },
-  { id: "jstyle", name: "J-Style Ring" },
-  { id: "qring", name: "QRing" },
-];
-
 function formatLastSync(date: Date | null): string {
   if (!date) return "Nunca sincronizado";
   const now = new Date();
@@ -64,7 +44,7 @@ export default function Integrations({
   onSelectProvider,
 }: IntegrationsProps) {
   const isAppleHealthConnected = connection.connected && connection.provider === "apple_health";
-  const isOtherConnected = connection.connected && connection.provider !== "apple_health";
+  const isJStyleConnected = connection.connected && connection.provider === "jstyle";
 
   return (
     <div className="min-h-screen bg-vyr-bg-primary px-5 pt-6 pb-28 safe-area-top safe-area-left safe-area-right">
@@ -150,31 +130,68 @@ export default function Integrations({
         </div>
       </section>
 
-      {/* Other providers */}
-      <section className="animate-fade-in" style={{ animationDelay: "100ms" }}>
-        <h2 className="text-vyr-text-muted text-xs font-medium tracking-wider uppercase mb-4">Outros dispositivos</h2>
-        <div className="bg-vyr-bg-surface rounded-2xl divide-y divide-vyr-stroke-divider">
-          {OTHER_PROVIDERS.map((provider) => {
-            const isConnected = isOtherConnected && connection.provider === provider.id;
-            return (
+      {/* J-Style Ring Card */}
+      <section className="mb-6 animate-fade-in" style={{ animationDelay: "100ms" }}>
+        <div className="bg-vyr-bg-surface rounded-2xl overflow-hidden">
+          <div className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-vyr-text-muted/20 to-vyr-text-muted/10 flex items-center justify-center">
+                <Activity className="w-5 h-5 text-vyr-text-secondary" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-vyr-text-primary font-semibold">J-Style Ring</span>
+                  {isJStyleConnected && (
+                    <span className="px-2 py-0.5 rounded-full bg-vyr-status-positive/20 text-vyr-status-positive text-[10px] font-medium">
+                      Conectado
+                    </span>
+                  )}
+                </div>
+                <span className="text-vyr-text-muted text-sm">
+                  {isJStyleConnected
+                    ? `Última sincronização: ${formatLastSync(connection.lastSync)}`
+                    : "Não conectado"}
+                </span>
+              </div>
+            </div>
+
+            {isJStyleConnected ? (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => onSelectProvider("jstyle")}
+                  className="flex-1 bg-vyr-bg-primary rounded-xl py-3 text-vyr-text-secondary text-sm font-medium transition-all active:scale-[0.98]"
+                >
+                  Gerenciar
+                </button>
+                <button
+                  onClick={() => onSelectProvider("jstyle")}
+                  className="flex-1 bg-vyr-status-negative/10 rounded-xl py-3 text-vyr-status-negative text-sm font-medium transition-all active:scale-[0.98]"
+                >
+                  Desconectar
+                </button>
+              </div>
+            ) : (
               <button
-                key={provider.id}
-                onClick={() => onSelectProvider(provider.id)}
-                className="w-full flex items-center gap-3 p-4 transition-all active:scale-[0.98] active:bg-vyr-bg-primary/50"
+                onClick={() => onSelectProvider("jstyle")}
+                className="w-full bg-vyr-bg-primary border border-vyr-stroke-divider rounded-xl py-3 text-vyr-text-primary text-sm font-medium transition-all active:scale-[0.98] hover:bg-vyr-bg-surface"
               >
-                <div className="w-10 h-10 rounded-xl bg-vyr-bg-primary flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-vyr-text-muted" />
-                </div>
-                <div className="flex-1 text-left">
-                  <span className="text-vyr-text-primary font-medium block">{provider.name}</span>
-                  <span className="text-vyr-text-muted text-sm">
-                    {isConnected ? "Conectado" : "Não conectado"}
-                  </span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-vyr-text-muted" />
+                Conectar J-Style Ring
               </button>
-            );
-          })}
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Info note */}
+      <section className="animate-fade-in" style={{ animationDelay: "150ms" }}>
+        <div className="bg-vyr-bg-surface/50 rounded-2xl p-4 flex gap-3">
+          <Info className="w-5 h-5 text-vyr-text-muted shrink-0 mt-0.5" />
+          <div>
+            <span className="text-vyr-text-secondary text-sm font-medium block mb-1">Outros wearables</span>
+            <span className="text-vyr-text-muted text-sm leading-relaxed">
+              Garmin, Whoop, Oura, Fitbit e demais dispositivos compatíveis serão integrados automaticamente via Apple Health.
+            </span>
+          </div>
         </div>
       </section>
     </div>
