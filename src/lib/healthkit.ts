@@ -1,58 +1,25 @@
 // VYR Labs - Apple Health (HealthKit) Integration via Capacitor
-// Uses @perfood/capacitor-healthkit plugin (installed locally on native builds)
+// Uses @perfood/capacitor-healthkit plugin
 // Gracefully falls back on web (returns unavailable)
 
-import { Capacitor, registerPlugin } from "@capacitor/core";
+import { Capacitor } from "@capacitor/core";
+import { CapacitorHealthkit, type OtherData } from "@perfood/capacitor-healthkit";
 import type { WearableData } from "./vyr-types";
 
 // ============================================================
-// Types matching @perfood/capacitor-healthkit API
-// ============================================================
-
-interface HealthKitPlugin {
-  isAvailable(): Promise<{ available: boolean }>;
-  requestAuthorization(opts: {
-    all?: string[];
-    read?: string[];
-    write?: string[];
-  }): Promise<void>;
-  isAuthorized(opts: {
-    read?: string[];
-    write?: string[];
-  }): Promise<{ authorized: boolean }>;
-  queryHKitSampleType<T = any>(opts: {
-    sampleName: string;
-    startDate: string;
-    endDate: string;
-    limit?: number;
-  }): Promise<{ resultData: T[] }>;
-}
-
-// Register plugin – resolves natively or returns null on web
-let CapacitorHealthkit: HealthKitPlugin | null = null;
-
-try {
-  if (Capacitor.isNativePlatform()) {
-    CapacitorHealthkit = registerPlugin<HealthKitPlugin>("CapacitorHealthkit");
-  }
-} catch {
-  // Not available (web build)
-}
-
-// ============================================================
-// Constants – HealthKit sample type identifiers
+// Constants – sample type identifiers (plugin enum values)
 // ============================================================
 
 const HK_TYPES = {
-  HEART_RATE: "HKQuantityTypeIdentifierHeartRate",
-  HRV: "HKQuantityTypeIdentifierHeartRateVariabilitySDNN",
-  RESTING_HR: "HKQuantityTypeIdentifierRestingHeartRate",
-  SLEEP: "HKCategoryTypeIdentifierSleepAnalysis",
-  STEPS: "HKQuantityTypeIdentifierStepCount",
-  SPO2: "HKQuantityTypeIdentifierOxygenSaturation",
-  BODY_TEMP: "HKQuantityTypeIdentifierBodyTemperature",
-  RESPIRATORY: "HKQuantityTypeIdentifierRespiratoryRate",
-  WORKOUT: "HKWorkoutTypeIdentifier",
+  HEART_RATE: "heartRate",
+  HRV: "heartRateVariabilitySDNN",
+  RESTING_HR: "restingHeartRate",
+  SLEEP: "sleepAnalysis",
+  STEPS: "stepCount",
+  SPO2: "oxygenSaturation",
+  BODY_TEMP: "bodyTemperature",
+  RESPIRATORY: "respiratoryRate",
+  WORKOUT: "workoutType",
 } as const;
 
 const ALL_READ_TYPES = Object.values(HK_TYPES);
@@ -63,10 +30,10 @@ const ALL_READ_TYPES = Object.values(HK_TYPES);
 
 /** Check if HealthKit is available on the current device */
 export async function isHealthKitAvailable(): Promise<boolean> {
-  if (!CapacitorHealthkit) return false;
+  if (!Capacitor.isNativePlatform()) return false;
   try {
-    const { available } = await CapacitorHealthkit.isAvailable();
-    return available;
+    await CapacitorHealthkit.isAvailable();
+    return true;
   } catch {
     return false;
   }
@@ -74,53 +41,37 @@ export async function isHealthKitAvailable(): Promise<boolean> {
 
 /** Request HealthKit read permissions for all VYR-relevant types */
 export async function requestHealthKitPermissions(): Promise<boolean> {
-  if (!CapacitorHealthkit) return false;
+  if (!Capacitor.isNativePlatform()) return false;
   try {
     await CapacitorHealthkit.requestAuthorization({
-      read: ALL_READ_TYPES,
-      write: [], // VYR only reads
+      all: [],
+      read: [...ALL_READ_TYPES],
+      write: [],
     });
-    // After requesting, check if actually authorized
-    const { authorized } = await CapacitorHealthkit.isAuthorized({
-      read: ALL_READ_TYPES,
-    });
-    return authorized;
+    // The plugin doesn't expose a reliable "isAuthorized" for read;
+    // after the prompt, we assume success (denied = empty query results).
+    return true;
   } catch (err) {
     console.error("[HealthKit] Permission request failed:", err);
     return false;
   }
 }
 
-/** Check if permissions are currently authorized */
+/** Check if permissions are currently authorized (best-effort) */
 export async function isHealthKitAuthorized(): Promise<boolean> {
-  if (!CapacitorHealthkit) return false;
-  try {
-    const { authorized } = await CapacitorHealthkit.isAuthorized({
-      read: ALL_READ_TYPES,
-    });
-    return authorized;
-  } catch {
-    return false;
-  }
+  // The plugin has no read-auth check; we just verify availability.
+  return isHealthKitAvailable();
 }
 
 // ============================================================
 // Data Reading – pulls last 24h and maps to WearableData
 // ============================================================
 
-interface RawSample {
-  value?: number;
-  startDate?: string;
-  endDate?: string;
-  source?: string;
-  [key: string]: any;
-}
-
 /** Read the last 24h of biometric data and return a VYR WearableData object */
 export async function readHealthKitData(
   dateStr?: string
 ): Promise<WearableData | null> {
-  if (!CapacitorHealthkit) return null;
+  if (!Capacitor.isNativePlatform()) return null;
 
   const targetDate = dateStr ? new Date(dateStr) : new Date();
   const startOfDay = new Date(targetDate);
@@ -133,7 +84,6 @@ export async function readHealthKitData(
   const isoDate = targetDate.toISOString().slice(0, 10);
 
   try {
-    // Parallel queries for all relevant data types
     const [hrData, hrvData, restingHRData, sleepData, stepsData, spo2Data, tempData] =
       await Promise.all([
         querySafe(HK_TYPES.HEART_RATE, start, end),
@@ -145,7 +95,7 @@ export async function readHealthKitData(
         querySafe(HK_TYPES.BODY_TEMP, start, end),
       ]);
 
-    // Process heart rate → resting HR (minimum value overnight or from resting type)
+    // Process heart rate → resting HR
     const rhr = restingHRData.length > 0
       ? avg(restingHRData.map((s) => s.value ?? 0))
       : hrData.length > 0
@@ -157,28 +107,25 @@ export async function readHealthKitData(
       ? avg(hrvData.map((s) => s.value ?? 0))
       : undefined;
 
-    // Normalize HRV to 0-100 index (population reference: 20ms=0, 80ms=100)
+    // Normalize HRV to 0-100 index
     const hrvIndex = hrvRawMs !== undefined
       ? Math.max(0, Math.min(100, ((hrvRawMs - 20) / 60) * 100))
       : undefined;
 
-    // Process sleep
     const sleepInfo = processSleep(sleepData);
 
-    // Process SpO2 (stored as fraction 0-1 in HealthKit, convert to %)
+    // SpO2 (stored as fraction 0-1 in HealthKit, convert to %)
     const spo2 = spo2Data.length > 0
       ? avg(spo2Data.map((s) => {
           const v = s.value ?? 0;
-          return v <= 1 ? v * 100 : v; // Handle both fraction and percentage
+          return v <= 1 ? v * 100 : v;
         }))
       : undefined;
 
-    // Process body temperature
     const bodyTemperature = tempData.length > 0
       ? avg(tempData.map((s) => s.value ?? 0))
       : undefined;
 
-    // Process steps → infer activity level
     const totalSteps = stepsData.reduce((sum, s) => sum + (s.value ?? 0), 0);
     const previousDayActivity = totalSteps > 12000
       ? ("high" as const)
@@ -210,15 +157,23 @@ export async function readHealthKitData(
 // Internal Helpers
 // ============================================================
 
+interface RawSample {
+  value?: number;
+  startDate?: string;
+  endDate?: string;
+  source?: string;
+  [key: string]: any;
+}
+
 async function querySafe(
   sampleName: string,
   startDate: string,
   endDate: string,
   limit = 1000
 ): Promise<RawSample[]> {
-  if (!CapacitorHealthkit) return [];
+  if (!Capacitor.isNativePlatform()) return [];
   try {
-    const { resultData } = await CapacitorHealthkit.queryHKitSampleType({
+    const { resultData } = await CapacitorHealthkit.queryHKitSampleType<OtherData>({
       sampleName,
       startDate,
       endDate,
@@ -244,16 +199,14 @@ interface SleepInfo {
 function processSleep(samples: RawSample[]): SleepInfo {
   if (samples.length === 0) return {};
 
-  // Filter to actual sleep categories (not InBed)
   // HealthKit sleep values: 0=InBed, 1=Asleep, 2=Awake, 3=Core, 4=Deep, 5=REM
   const asleepSamples = samples.filter((s) => {
     const v = s.value ?? 0;
-    return v >= 1 && v !== 2; // Asleep, Core, Deep, REM (not Awake)
+    return v >= 1 && v !== 2;
   });
 
   const awakeSamples = samples.filter((s) => (s.value ?? 0) === 2);
 
-  // Calculate total sleep duration in hours
   let totalSleepMs = 0;
   for (const s of asleepSamples) {
     if (s.startDate && s.endDate) {
@@ -262,10 +215,9 @@ function processSleep(samples: RawSample[]): SleepInfo {
   }
   const duration = totalSleepMs > 0 ? totalSleepMs / (1000 * 60 * 60) : undefined;
 
-  // Estimate quality (0-100): based on proportion of deep+REM vs total sleep
   const deepRemSamples = samples.filter((s) => {
     const v = s.value ?? 0;
-    return v === 4 || v === 5; // Deep or REM
+    return v === 4 || v === 5;
   });
   let deepRemMs = 0;
   for (const s of deepRemSamples) {
@@ -275,7 +227,7 @@ function processSleep(samples: RawSample[]): SleepInfo {
   }
   const quality =
     totalSleepMs > 0
-      ? Math.round(Math.min(100, (deepRemMs / totalSleepMs) * 100 * 2.5)) // Scale: 40% deep+REM = 100
+      ? Math.round(Math.min(100, (deepRemMs / totalSleepMs) * 100 * 2.5))
       : undefined;
 
   return {
