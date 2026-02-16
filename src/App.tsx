@@ -270,7 +270,7 @@ function VYRApp() {
       )}
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-vyr-bg-primary border-t border-vyr-stroke-divider safe-area-bottom z-20">
+      <nav className="fixed bottom-0 left-0 right-0 bg-vyr-bg-primary border-t border-vyr-stroke-divider z-20" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}>
         <div className="flex justify-around max-w-md mx-auto px-4 py-3">
           <button
             onClick={goHome}

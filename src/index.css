@@ -118,12 +118,18 @@
   html {
     /* Tipografia base conforme spec: Inter */
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    height: 100%;
+    /* Prevent iOS bounce/rubber-band */
+    overflow: hidden;
   }
 
   body {
     @apply antialiased;
     background-color: hsl(var(--vyr-bg-primary));
     color: hsl(var(--vyr-text-primary));
+    height: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
     /* Evita pull-to-refresh no mobile */
     overscroll-behavior: none;
   }
