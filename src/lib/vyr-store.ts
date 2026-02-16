@@ -3,8 +3,9 @@
 // Falls back to empty state when no data is available
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { connectAppleHealth, disconnectAppleHealth, syncHealthKitData, getAppleHealthStatus } from "./healthkit-sync";
 import type { 
   VYRState, 
   Checkpoint, 
@@ -89,6 +90,7 @@ export const ACTION_COPY: Record<MomentAction, {
 // Hook para gerenciar o store com dados reais do banco
 export function useVYRStore() {
   const today = new Date().toISOString().slice(0, 10);
+  const queryClient = useQueryClient();
 
   // === QUERIES AO BANCO ===
 
@@ -269,10 +271,26 @@ export function useVYRStore() {
   // Confirmação de sachê
   const [sachetConfirmation, setSachetConfirmation] = useState<SachetConfirmation | null>(null);
   
-  // Wearable connection state
-  const [wearableConnection, setWearableConnection] = useState<WearableConnection>(
-    initialWearableConnection
-  );
+  // Wearable connection state — loaded from user_integrations
+  const { data: dbIntegration } = useQuery({
+    queryKey: ["user_integration_apple_health"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      return getAppleHealthStatus(user.id);
+    },
+  });
+
+  const wearableConnection: WearableConnection = useMemo(() => {
+    if (!dbIntegration?.connected) return initialWearableConnection;
+    return {
+      connected: true,
+      provider: "apple_health" as WearableProvider,
+      lastSync: dbIntegration.lastSync,
+      syncStatus: dbIntegration.lastSync ? "synced" : "pending",
+      baselineDays: 0,
+    };
+  }, [dbIntegration]);
 
   // === ACTIONS ===
 
@@ -319,28 +337,27 @@ export function useVYRStore() {
     logAction(action);
   }, [logAction]);
 
-  // Wearable connection actions
-  const connectWearable = useCallback((provider: WearableProvider) => {
-    setWearableConnection({
-      connected: true,
-      provider,
-      lastSync: new Date(),
-      syncStatus: "synced",
-      baselineDays: 0,
-    });
-  }, []);
+  // Wearable connection actions — now use real HealthKit + DB
+  const connectWearable = useCallback(async (provider: WearableProvider) => {
+    if (provider === "apple_health") {
+      const result = await connectAppleHealth();
+      if (!result.success) {
+        console.warn("[VYR] Apple Health connect failed:", result.error);
+      }
+    }
+    // Refresh integration query
+    queryClient.invalidateQueries({ queryKey: ["user_integration_apple_health"] });
+  }, [queryClient]);
 
-  const disconnectWearable = useCallback(() => {
-    setWearableConnection(initialWearableConnection);
-  }, []);
+  const disconnectWearable = useCallback(async () => {
+    await disconnectAppleHealth();
+    queryClient.invalidateQueries({ queryKey: ["user_integration_apple_health"] });
+  }, [queryClient]);
 
-  const syncWearable = useCallback(() => {
-    setWearableConnection(prev => ({
-      ...prev,
-      lastSync: new Date(),
-      syncStatus: "synced",
-    }));
-  }, []);
+  const syncWearable = useCallback(async () => {
+    await syncHealthKitData();
+    queryClient.invalidateQueries({ queryKey: ["user_integration_apple_health"] });
+  }, [queryClient]);
 
   return {
     // Estado principal

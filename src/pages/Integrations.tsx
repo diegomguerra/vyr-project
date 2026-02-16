@@ -1,7 +1,11 @@
 // VYR Labs - Integrations Page
 
-import { ChevronLeft, Heart, Activity, Moon, Footprints, Dumbbell, Check, Info } from "lucide-react";
+import { useState } from "react";
+import { ChevronLeft, Heart, Activity, Moon, Footprints, Dumbbell, Check, Info, Loader2 } from "lucide-react";
 import type { WearableConnection, WearableProvider } from "@/lib/vyr-types";
+import { connectAppleHealth, disconnectAppleHealth, syncHealthKitData } from "@/lib/healthkit-sync";
+import { isHealthKitAvailable } from "@/lib/healthkit";
+import { toast } from "sonner";
 
 interface IntegrationsProps {
   connection: WearableConnection;
@@ -43,8 +47,57 @@ export default function Integrations({
   onDisconnectAppleHealth,
   onSelectProvider,
 }: IntegrationsProps) {
+  const [loading, setLoading] = useState(false);
   const isAppleHealthConnected = connection.connected && connection.provider === "apple_health";
   const isJStyleConnected = connection.connected && connection.provider === "jstyle";
+
+  const handleConnect = async () => {
+    setLoading(true);
+    try {
+      const available = await isHealthKitAvailable();
+      if (!available) {
+        onConnectAppleHealth();
+        toast.info("HealthKit disponível apenas no dispositivo iOS.");
+        return;
+      }
+      const result = await connectAppleHealth();
+      if (result.success) {
+        onConnectAppleHealth();
+        toast.success("Apple Health conectado com sucesso!");
+      } else {
+        toast.error(result.error ?? "Erro ao conectar Apple Health.");
+      }
+    } catch {
+      toast.error("Erro inesperado ao conectar.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setLoading(true);
+    try {
+      await disconnectAppleHealth();
+      onDisconnectAppleHealth();
+      toast.success("Apple Health desconectado.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSync = async () => {
+    setLoading(true);
+    try {
+      const result = await syncHealthKitData();
+      if (result.success) {
+        toast.success(result.metricsWritten ? "Dados sincronizados!" : "Nenhum dado novo disponível.");
+      } else {
+        toast.error(result.error ?? "Erro na sincronização.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-vyr-bg-primary px-5 pt-6 pb-28 safe-area-top safe-area-left safe-area-right">
@@ -104,14 +157,17 @@ export default function Integrations({
                 {/* Actions */}
                 <div className="flex gap-3">
                   <button
-                    onClick={onConnectAppleHealth}
-                    className="flex-1 bg-vyr-bg-primary rounded-xl py-3 text-vyr-text-secondary text-sm font-medium transition-all active:scale-[0.98]"
+                    onClick={handleSync}
+                    disabled={loading}
+                    className="flex-1 bg-vyr-bg-primary rounded-xl py-3 text-vyr-text-secondary text-sm font-medium transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    Gerenciar permissões
+                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Sincronizar agora
                   </button>
                   <button
-                    onClick={onDisconnectAppleHealth}
-                    className="flex-1 bg-vyr-status-negative/10 rounded-xl py-3 text-vyr-status-negative text-sm font-medium transition-all active:scale-[0.98]"
+                    onClick={handleDisconnect}
+                    disabled={loading}
+                    className="flex-1 bg-vyr-status-negative/10 rounded-xl py-3 text-vyr-status-negative text-sm font-medium transition-all active:scale-[0.98] disabled:opacity-50"
                   >
                     Desconectar
                   </button>
@@ -120,9 +176,11 @@ export default function Integrations({
             ) : (
               /* Disconnected state */
               <button
-                onClick={onConnectAppleHealth}
-                className="w-full bg-gradient-to-r from-pink-500/20 to-red-500/20 border border-pink-500/30 rounded-xl py-3 text-vyr-text-primary text-sm font-medium transition-all active:scale-[0.98] hover:from-pink-500/30 hover:to-red-500/30"
+                onClick={handleConnect}
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-pink-500/20 to-red-500/20 border border-pink-500/30 rounded-xl py-3 text-vyr-text-primary text-sm font-medium transition-all active:scale-[0.98] hover:from-pink-500/30 hover:to-red-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
               >
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Conectar Apple Health
               </button>
             )}
