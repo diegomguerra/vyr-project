@@ -145,11 +145,11 @@ function VYRApp() {
   // Handler para tap no status de conexão
   const handleConnectionTap = useCallback(() => {
     if (wearableConnection.connected) {
-      goSettings();
+      goIntegrations();
     } else {
-      goWearableSetup();
+      goIntegrations();
     }
-  }, [wearableConnection.connected, goSettings, goWearableSetup]);
+  }, [wearableConnection.connected, goIntegrations]);
 
   return (
     <div className="min-h-screen bg-vyr-bg-primary">
