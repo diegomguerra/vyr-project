@@ -56,7 +56,6 @@ export default function Integrations({
     try {
       const available = await isHealthKitAvailable();
       if (!available) {
-        onConnectAppleHealth();
         toast.info("HealthKit disponível apenas no dispositivo iOS.");
         return;
       }
