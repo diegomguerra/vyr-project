@@ -1,8 +1,10 @@
-// VYR Labs - Mock Store (integrado com Engine v4)
-// Usa dados simulados de wearable para gerar estado
-// Agora com baseline pessoal e contexto temporal
+// VYR Labs - Store (real data from DB)
+// Queries computed_states, action_logs, checkpoints, daily_reviews from database
+// Falls back to empty state when no data is available
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { 
   VYRState, 
   Checkpoint, 
@@ -16,19 +18,7 @@ import type {
   WearableConnection,
   WearableProvider,
 } from "./vyr-types";
-import { computeState, getRecommendedAction } from "./vyr-engine";
-import { computeBaselineFromHistory } from "./vyr-baseline";
-import { 
-  generateSystemReading, 
-  generatePillarDescriptions, 
-  generateSystemDiagnosis,
-  generateTodayMeaning,
-  generatePhysiologicalContext,
-  generateCognitiveWindow,
-  generateSuggestedTransition,
-  detectPatterns,
-} from "./vyr-interpreter";
-import { generate30DayHistory, toHistoryDay, DEMO_SCENARIOS } from "./vyr-mock-data";
+import { getRecommendedAction } from "./vyr-engine";
 
 // Estado inicial de conexão com wearable
 const initialWearableConnection: WearableConnection = {
@@ -39,69 +29,31 @@ const initialWearableConnection: WearableConnection = {
   baselineDays: 0,
 };
 
-// Gera estado VYR completo a partir de dados de wearable
-function buildVYRState(context: DayContext, currentAction: MomentAction): VYRState {
-  const { computedState, wearableData } = context;
-  
-  // Gera interpretações
-  const systemReading = generateSystemReading(computedState, wearableData);
-  const pillarDescriptions = generatePillarDescriptions(computedState);
-  const systemDiagnosis = generateSystemDiagnosis(computedState, wearableData);
-  const todayMeaning = generateTodayMeaning(computedState, wearableData);
-  
-  // Mapeia ação para label
-  const actionLabels: Record<MomentAction, string> = {
-    BOOT: "Iniciar BOOT",
-    HOLD: "Ativar HOLD",
-    CLEAR: "Iniciar CLEAR",
-  };
-  
-  const actionConsequences: Record<MomentAction, string> = {
-    BOOT: "Iniciar ativação cognitiva gradual para as próximas horas.",
-    HOLD: "Manter foco estável pelas próximas horas, priorizando economia cognitiva.",
-    CLEAR: "Facilitar transição para recuperação, preservando o que foi construído.",
-  };
-
-  return {
-    vyrStateScore: computedState.vyrScore,
-    stateLabel: computedState.stateLabel,
-    pillars: computedState.pillars,
-    microDescription: `${computedState.stateLabel} com ${computedState.dominantPillar} como ponto forte.`,
-    systemReading,
-    todayMeaning,
-    momentAction: currentAction,
-    momentActionTitle: actionLabels[currentAction],
-    actionConsequence: actionConsequences[currentAction],
-    pillarDescriptions,
-    systemDiagnosis,
-    // Legado
-    contextInsight: systemReading.whyScore,
-    momentActionSystemText: computedState.actionReason,
-    momentActionSubText: systemReading.limitingFactor,
-  };
-}
-
-// Reviews mock
-const initialReviews: DailyReview[] = [
-  {
-    id: "rev-1",
-    date: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
-    narrativeStart: "Você iniciou o dia com energia moderada e clareza preservada.",
-    narrativeMiddle: "O ciclo BOOT foi ativado às 08:45. Transição para HOLD às 14:20 manteve estabilidade.",
-    narrativeEnd: "CLEAR ativado às 19:30. O sistema registrou fechamento adequado do ciclo.",
-    valueGenerated: "O sistema manteve coerência entre estado e estratégia ao longo do dia. Boa adequação detectada.",
-    closingLine: "Ciclo concluído com sucesso.",
+// Estado VYR vazio (sem dados de wearable)
+const EMPTY_STATE: VYRState = {
+  vyrStateScore: 0,
+  stateLabel: "Sem dados",
+  pillars: { energia: 0, clareza: 0, estabilidade: 0 },
+  microDescription: "Conecte um wearable para iniciar.",
+  systemReading: {
+    whyScore: "Sem dados disponíveis para análise.",
+    limitingFactor: "Nenhum wearable conectado.",
+    dayRisk: "Conecte seu dispositivo para receber leituras.",
   },
-  {
-    id: "rev-2",
-    date: new Date(Date.now() - 86400000 * 2).toISOString().slice(0, 10),
-    narrativeStart: "Início com clareza elevada e boa reserva energética.",
-    narrativeMiddle: "Dia de alta produtividade. O sistema suportou demandas intensas.",
-    narrativeEnd: "Encerramento no horário adequado preservou a recuperação.",
-    valueGenerated: "Excelente aproveitamento da janela cognitiva disponível.",
-    closingLine: "Padrão consistente.",
+  todayMeaning: ["Conecte um wearable para ver o que seu dia pode significar."],
+  momentAction: "BOOT",
+  momentActionTitle: "Aguardando dados",
+  actionConsequence: "Conecte um wearable para receber recomendações personalizadas.",
+  pillarDescriptions: {
+    energia: "Aguardando leitura.",
+    clareza: "Aguardando leitura.",
+    estabilidade: "Aguardando leitura.",
   },
-];
+  systemDiagnosis: "Conecte um wearable para que o VYR possa calcular seu estado cognitivo.",
+  contextInsight: "Sem dados disponíveis.",
+  momentActionSystemText: "Aguardando dados.",
+  momentActionSubText: "Conecte um wearable.",
+};
 
 // Textos expandidos por tipo de ação
 export const ACTION_COPY: Record<MomentAction, {
@@ -134,28 +86,186 @@ export const ACTION_COPY: Record<MomentAction, {
   },
 };
 
-// Hook para gerenciar o store com engine integrada
+// Hook para gerenciar o store com dados reais do banco
 export function useVYRStore() {
-  // Gera histórico de 30 dias (já usa baseline internamente)
-  const history = useMemo(() => generate30DayHistory(), []);
-  
-  // Contexto do dia atual
-  const [todayContext] = useState<DayContext>(history[0]);
-  
-  // Ação atual (pode ser alterada pelo usuário)
+  const today = new Date().toISOString().slice(0, 10);
+
+  // === QUERIES AO BANCO ===
+
+  // Computed states (últimos 30 dias)
+  const { data: dbComputedStates } = useQuery({
+    queryKey: ["computed_states"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("computed_states")
+        .select("*")
+        .order("date", { ascending: false })
+        .limit(30);
+      return data ?? [];
+    },
+  });
+
+  // Action logs de hoje
+  const { data: dbActionLogs } = useQuery({
+    queryKey: ["action_logs", today],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("action_logs")
+        .select("*")
+        .gte("created_at", `${today}T00:00:00`)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  // Checkpoints de hoje
+  const { data: dbCheckpoints } = useQuery({
+    queryKey: ["checkpoints", today],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("checkpoints")
+        .select("*")
+        .gte("created_at", `${today}T00:00:00`)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  // Daily reviews (últimos 7 dias)
+  const { data: dbDailyReviews } = useQuery({
+    queryKey: ["daily_reviews"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("daily_reviews")
+        .select("*")
+        .order("date", { ascending: false })
+        .limit(7);
+      return data ?? [];
+    },
+  });
+
+  // === ESTADO DERIVADO ===
+
+  const hasData = (dbComputedStates?.length ?? 0) > 0;
+  const todayState = dbComputedStates?.[0];
+
+  // Estado VYR (real ou vazio)
+  const state: VYRState = useMemo(() => {
+    if (!hasData || !todayState) return EMPTY_STATE;
+
+    return {
+      vyrStateScore: todayState.vyr_score ?? 0,
+      stateLabel: todayState.state_label ?? "Calculando",
+      pillars: {
+        energia: todayState.energia ?? 0,
+        clareza: todayState.clareza ?? 0,
+        estabilidade: todayState.estabilidade ?? 0,
+      },
+      microDescription: `${todayState.state_label ?? "Estado"} com ${todayState.dominant_pillar ?? "equilíbrio"} como ponto forte.`,
+      systemReading: {
+        whyScore: todayState.action_reason ?? "Leitura calculada a partir dos seus dados biométricos.",
+        limitingFactor: todayState.limiting_pillar 
+          ? `${todayState.limiting_pillar} é o pilar que mais limita hoje.` 
+          : "Sem fator limitante identificado.",
+        dayRisk: todayState.vyr_score && todayState.vyr_score < 50 
+          ? "Dia de recuperação recomendada." 
+          : "Dia dentro da normalidade.",
+      },
+      todayMeaning: [
+        todayState.vyr_score && todayState.vyr_score >= 70
+          ? "Bom dia para tarefas que exigem concentração."
+          : todayState.vyr_score && todayState.vyr_score >= 50
+          ? "Dia adequado para rotina com pausas regulares."
+          : "Priorize tarefas leves e recuperação.",
+      ],
+      momentAction: todayState.recommended_action ?? "BOOT",
+      momentActionTitle: todayState.recommended_action 
+        ? ACTION_COPY[todayState.recommended_action].title 
+        : "Aguardando",
+      actionConsequence: todayState.recommended_action 
+        ? ACTION_COPY[todayState.recommended_action].expandedText 
+        : "",
+      pillarDescriptions: {
+        energia: `Energia ${(todayState.energia ?? 0) >= 60 ? "preservada" : "reduzida"}.`,
+        clareza: `Clareza ${(todayState.clareza ?? 0) >= 60 ? "boa" : "limitada"}.`,
+        estabilidade: `Estabilidade ${(todayState.estabilidade ?? 0) >= 60 ? "adequada" : "comprometida"}.`,
+      },
+      systemDiagnosis: todayState.action_reason ?? "Estado calculado a partir dos seus dados biométricos.",
+      contextInsight: todayState.action_reason ?? "",
+      momentActionSystemText: todayState.action_reason ?? "",
+      momentActionSubText: todayState.limiting_pillar ?? "",
+    };
+  }, [hasData, todayState]);
+
+  // Histórico simplificado para UI
+  const historyByDay: HistoryDay[] = useMemo(() => {
+    if (!dbComputedStates?.length) return [];
+    return dbComputedStates.slice(0, 7).map((cs) => ({
+      date: cs.date,
+      score: cs.vyr_score ?? 0,
+      dominantState: (cs.state_label ?? "").toLowerCase(),
+      systemNote: (cs.vyr_score ?? 0) >= 80 
+        ? "dia favorável, boa capacidade cognitiva"
+        : (cs.vyr_score ?? 0) >= 65 
+        ? "dia consistente, sem quedas abruptas"
+        : (cs.vyr_score ?? 0) >= 50 
+        ? "ajustes ao longo do dia" 
+        : "dia de recuperação necessária",
+    }));
+  }, [dbComputedStates]);
+
+  // Checkpoints mapeados
+  const checkpoints: Checkpoint[] = useMemo(() => {
+    if (!dbCheckpoints?.length) return [];
+    return dbCheckpoints.map((cp) => ({
+      id: cp.id,
+      timestamp: new Date(cp.created_at ?? Date.now()),
+      note: cp.note ?? undefined,
+    }));
+  }, [dbCheckpoints]);
+
+  // Action logs mapeados
+  const actionLogs: ActionLog[] = useMemo(() => {
+    if (!dbActionLogs?.length) return [];
+    return dbActionLogs.map((al) => ({
+      id: al.id,
+      timestamp: new Date(al.created_at ?? Date.now()),
+      action: al.action as MomentAction,
+    }));
+  }, [dbActionLogs]);
+
+  // Daily reviews mapeados
+  const dailyReviews: DailyReview[] = useMemo(() => {
+    if (!dbDailyReviews?.length) return [];
+    return dbDailyReviews.map((dr) => ({
+      id: dr.id,
+      date: dr.date,
+      narrativeStart: dr.narrative_start ?? "",
+      narrativeMiddle: dr.narrative_middle ?? "",
+      narrativeEnd: dr.narrative_end ?? "",
+      valueGenerated: dr.value_generated ?? "",
+      closingLine: dr.closing_line ?? "",
+    }));
+  }, [dbDailyReviews]);
+
+  // === AÇÃO ATUAL ===
   const [currentAction, setCurrentAction] = useState<MomentAction>(
-    todayContext.computedState.recommendedAction
+    todayState?.recommended_action ?? "BOOT"
   );
-  
-  // Sachets tomados hoje (para contexto temporal)
-  const [sachetsTakenToday, setSachetsTakenToday] = useState<MomentAction[]>([]);
-  
-  // Checkpoints
-  const [checkpoints, setCheckpoints] = useState<Checkpoint[]>(todayContext.checkpoints);
-  
-  // Action logs
-  const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
-  
+
+  // Atualiza ação quando dados chegam
+  useEffect(() => {
+    if (todayState?.recommended_action) {
+      setCurrentAction(todayState.recommended_action);
+    }
+  }, [todayState?.recommended_action]);
+
+  // Sachets tomados hoje
+  const sachetsTakenToday = useMemo(() => 
+    actionLogs.map((al) => al.action),
+    [actionLogs]
+  );
+
   // Confirmação de sachê
   const [sachetConfirmation, setSachetConfirmation] = useState<SachetConfirmation | null>(null);
   
@@ -163,62 +273,26 @@ export function useVYRStore() {
   const [wearableConnection, setWearableConnection] = useState<WearableConnection>(
     initialWearableConnection
   );
-  
-  // Estado VYR derivado
-  const state = useMemo(() => 
-    buildVYRState(todayContext, currentAction),
-    [todayContext, currentAction]
-  );
-  
-  // Histórico simplificado para UI
-  const historyByDay = useMemo(() => 
-    history.slice(0, 7).map(toHistoryDay),
-    [history]
-  );
-  
-  // Contexto fisiológico
-  const physiologicalContext = useMemo(() => 
-    generatePhysiologicalContext(todayContext.wearableData, todayContext.computedState),
-    [todayContext]
-  );
-  
-  // Janela cognitiva
-  const cognitiveWindow = useMemo(() => 
-    generateCognitiveWindow(todayContext.computedState),
-    [todayContext]
-  );
-  
-  // Transição sugerida (usa sachets tomados como proxy de tempo)
-  const suggestedTransition = useMemo(() => {
-    const hoursSince = sachetsTakenToday.length > 0 ? 3 : 0;
-    return generateSuggestedTransition(currentAction, todayContext.computedState, hoursSince);
-  }, [currentAction, todayContext, sachetsTakenToday]);
-  
-  // Padrões detectados
-  const detectedPatterns = useMemo(() => 
-    detectPatterns(history),
-    [history]
-  );
 
-  const addCheckpoint = useCallback((note?: string) => {
-    const newCheckpoint: Checkpoint = {
-      id: `cp-${Date.now()}`,
-      timestamp: new Date(),
-      note,
-    };
-    setCheckpoints((prev) => [newCheckpoint, ...prev]);
+  // === ACTIONS ===
+
+  const addCheckpoint = useCallback(async (note?: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("checkpoints").insert({
+      user_id: user.id,
+      note: note ?? null,
+    });
   }, []);
 
-  const logAction = useCallback((action: MomentAction) => {
-    const newLog: ActionLog = {
-      id: `log-${Date.now()}`,
-      timestamp: new Date(),
-      action,
-    };
-    setActionLogs((prev) => [newLog, ...prev]);
+  const logAction = useCallback(async (action: MomentAction) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-    // Registra sachê tomado
-    setSachetsTakenToday((prev) => [...prev, action]);
+    await supabase.from("action_logs").insert({
+      user_id: user.id,
+      action,
+    });
 
     // Mostra confirmação
     setSachetConfirmation({
@@ -227,16 +301,15 @@ export function useVYRStore() {
       nextReadingIn: action === "BOOT" ? "2-3 horas" : action === "HOLD" ? "3-4 horas" : "amanhã",
     });
 
-    // Próxima ação usa o engine com contexto atualizado
+    // Próxima ação
     const updatedSachets = [...sachetsTakenToday, action];
     const nextAction = getRecommendedAction(
-      todayContext.computedState.pillars,
-      todayContext.computedState.vyrScore,
+      state.pillars,
+      state.vyrStateScore,
       { hourOfDay: new Date().getHours(), sachetsTakenToday: updatedSachets }
     );
-    
     setCurrentAction(nextAction);
-  }, [sachetsTakenToday, todayContext]);
+  }, [sachetsTakenToday, state]);
 
   const dismissConfirmation = useCallback(() => {
     setSachetConfirmation(null);
@@ -253,7 +326,7 @@ export function useVYRStore() {
       provider,
       lastSync: new Date(),
       syncStatus: "synced",
-      baselineDays: 7, // Simula baseline completo para demo
+      baselineDays: 0,
     });
   }, []);
 
@@ -272,19 +345,20 @@ export function useVYRStore() {
   return {
     // Estado principal
     state,
+    hasData,
     checkpoints,
-    dailyReviews: initialReviews,
+    dailyReviews,
     actionLogs,
     historyByDay,
     
-    // Novos dados da engine
-    physiologicalContext,
-    cognitiveWindow,
-    suggestedTransition,
-    detectedPatterns,
+    // Contextos (null quando sem dados)
+    physiologicalContext: undefined,
+    cognitiveWindow: undefined,
+    suggestedTransition: undefined,
+    detectedPatterns: [] as DetectedPattern[],
     sachetConfirmation,
-    todayContext,
-    fullHistory: history,
+    todayContext: undefined as DayContext | undefined,
+    fullHistory: [] as DayContext[],
     
     // Wearable
     wearableConnection,

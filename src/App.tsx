@@ -53,6 +53,7 @@ function VYRApp() {
 
   const {
     state,
+    hasData,
     checkpoints,
     dailyReviews,
     historyByDay,
@@ -173,6 +174,7 @@ function VYRApp() {
       {screen === "home" && (
         <Home
           state={state}
+          hasData={hasData}
           greeting={greeting}
           historyByDay={historyByDay}
           physiologicalContext={physiologicalContext}

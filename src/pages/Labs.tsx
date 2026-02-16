@@ -128,12 +128,7 @@ export default function Labs({
   const hour = new Date().getHours();
   const currentPhase: MomentAction = hour >= 5 && hour < 11 ? "BOOT" : hour >= 11 && hour < 17 ? "HOLD" : "CLEAR";
 
-  // Mock perception records
-  const [perceptionRecords, setPerceptionRecords] = useState<PerceptionRecord[]>([
-    { id: "1", date: new Date().toISOString().slice(0, 10), phase: "GERAL", scores: { foco: 7, clareza: 6, energia: 8, estabilidade: 7 }, timestamp: new Date(new Date().setHours(8, 30)) },
-    { id: "2", date: new Date().toISOString().slice(0, 10), phase: "BOOT", scores: { foco: 6, clareza: 7, energia: 5, estabilidade: 6 }, timestamp: new Date(new Date().setHours(9, 0)) },
-    { id: "3", date: new Date().toISOString().slice(0, 10), phase: "HOLD", scores: { foco: 7, clareza: 8, energia: 6, estabilidade: 7 }, timestamp: new Date(new Date().setHours(14, 0)) },
-  ]);
+  const [perceptionRecords, setPerceptionRecords] = useState<PerceptionRecord[]>([]);
 
   const handlePerceptionSubmit = (phase: MomentAction | "GERAL", scores: Record<string, number>) => {
     const record: PerceptionRecord = {
@@ -146,12 +141,11 @@ export default function Labs({
     setPerceptionRecords((prev) => [record, ...prev]);
   };
 
-  // Config de sinais (mock)
   const [signals, setSignals] = useState({
-    foco: true,
-    mudanca: true,
+    foco: false,
+    mudanca: false,
     sustentacao: false,
-    encerramento: true,
+    encerramento: false,
   });
 
   const tabs: { id: LabsTab; label: string }[] = [
