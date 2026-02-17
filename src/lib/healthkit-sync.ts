@@ -91,6 +91,12 @@ export async function syncHealthKitData(userId?: string): Promise<SyncResult> {
   if (data.bodyTemperature !== undefined) metrics.body_temp = data.bodyTemperature;
   if (data.previousDayActivity) metrics.activity_level = data.previousDayActivity;
 
+  // Debug: verify userId matches auth session
+  const { data: { session } } = await supabase.auth.getSession();
+  console.log("[HealthKit Sync] userId param:", userId);
+  console.log("[HealthKit Sync] auth.uid():", session?.user?.id);
+  console.log("[HealthKit Sync] match:", userId === session?.user?.id);
+
   // Upsert to ring_daily_data
   const { error } = await supabase
     .from("ring_daily_data")
