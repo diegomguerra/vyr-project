@@ -71,26 +71,3 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
-
-
-## iOS (Capacitor) build workflow
-
-- `webDir` está configurado para `dist` em `capacitor.config.ts`.
-- O bundle local do app iOS deve ser sincronizado para `ios/App/App/public` via `npx cap sync ios`.
-- Este repositório usa `App.xcodeproj` (SPM), sem dependência de `App.xcworkspace`.
-
-### Passos recomendados
-
-```sh
-npm ci
-npm run ios:update
-open ios/App/App.xcodeproj
-# Xcode: Product -> Clean Build Folder
-# Xcode: Run
-```
-
-### Diagnóstico rápido
-
-```sh
-npm run ios:diag
-```
