@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Lightbulb, TrendingUp, AlertTriangle, Sparkles, RefreshCw } from "lucide-react";
-import { supabase, SUPABASE_URL } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "https://jjuuexzrfcnjngxbxine.supabase.co";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { Participante } from "@/lib/types";
