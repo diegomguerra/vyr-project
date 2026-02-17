@@ -102,7 +102,7 @@ export async function syncHealthKitData(userId?: string): Promise<SyncResult> {
         metrics,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: "user_id,day" }
+      { onConflict: "user_id,day,source_provider" }
     );
 
   if (error) {
