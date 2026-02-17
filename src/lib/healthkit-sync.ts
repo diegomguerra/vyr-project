@@ -18,34 +18,27 @@ export interface SyncResult {
 
 /** Full connect flow: check availability → request permissions → initial sync → persist integration */
 export async function connectAppleHealth(): Promise<SyncResult> {
-  // 1. Check device availability
   const available = await isHealthKitAvailable();
   if (!available) {
     return { success: false, error: "HealthKit não disponível neste dispositivo." };
   }
 
-  // 2. Request permissions
   const authorized = await requestHealthKitPermissions();
   if (!authorized) {
     return { success: false, error: "Permissões do Apple Health não foram concedidas." };
   }
 
-  // 3. Get current user
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { success: false, error: "Usuário não autenticado." };
   }
 
-  // 4. Persist integration record
   await upsertIntegration(user.id, "apple_health", "active");
-
-  // 5. Initial data sync
-  const syncResult = await syncHealthKitData(user.id);
-
+  const syncResult = await syncHealthKitData();
   return syncResult;
 }
 
-/** Disconnect Apple Health: update integration status and remove data source */
+/** Disconnect Apple Health */
 export async function disconnectAppleHealth(): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
@@ -58,20 +51,31 @@ export async function disconnectAppleHealth(): Promise<void> {
 }
 
 /** Sync today's HealthKit data to ring_daily_data */
-export async function syncHealthKitData(userId?: string): Promise<SyncResult> {
-  if (!userId) {
-    const { data: { user } } = await supabase.auth.getUser();
-    userId = user?.id;
-  }
-  if (!userId) return { success: false, error: "Não autenticado." };
+export async function syncHealthKitData(): Promise<SyncResult> {
+  // Always use fresh session to guarantee auth.uid() matches in RLS
+  let userId: string | undefined;
 
-  // Check authorization
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user?.id) {
+    userId = session.user.id;
+  } else {
+    // Session stale — try refresh
+    const { data: refreshData } = await supabase.auth.refreshSession();
+    userId = refreshData.session?.user?.id;
+  }
+
+  if (!userId) {
+    console.error("[HealthKit Sync] No valid session for RLS. Cannot write data.");
+    return { success: false, error: "Sessão expirada. Faça login novamente." };
+  }
+
+  console.log("[HealthKit Sync] Authenticated as:", userId);
+
   const authorized = await isHealthKitAuthorized();
   if (!authorized) {
     return { success: false, error: "Permissões Apple Health revogadas." };
   }
 
-  // Read today's data
   const today = new Date().toISOString().slice(0, 10);
   const data = await readHealthKitData(today);
 
@@ -79,7 +83,7 @@ export async function syncHealthKitData(userId?: string): Promise<SyncResult> {
     return { success: true, metricsWritten: false };
   }
 
-  // Build metrics JSONB matching ring_daily_data.metrics shape
+  // Build metrics JSONB
   const metrics: Record<string, any> = {};
   if (data.rhr !== undefined) metrics.rhr = data.rhr;
   if (data.hrvRawMs !== undefined) metrics.hrv_ms = data.hrvRawMs;
@@ -91,13 +95,7 @@ export async function syncHealthKitData(userId?: string): Promise<SyncResult> {
   if (data.bodyTemperature !== undefined) metrics.body_temp = data.bodyTemperature;
   if (data.previousDayActivity) metrics.activity_level = data.previousDayActivity;
 
-  // Debug: verify userId matches auth session
-  const { data: { session } } = await supabase.auth.getSession();
-  console.log("[HealthKit Sync] userId param:", userId);
-  console.log("[HealthKit Sync] auth.uid():", session?.user?.id);
-  console.log("[HealthKit Sync] match:", userId === session?.user?.id);
-
-  // Upsert to ring_daily_data
+  // Upsert — userId is guaranteed to match auth.uid() from the active session
   const { error } = await supabase
     .from("ring_daily_data")
     .upsert(
@@ -113,7 +111,6 @@ export async function syncHealthKitData(userId?: string): Promise<SyncResult> {
 
   if (error) {
     console.error("[HealthKit Sync] Error writing ring_daily_data:", error);
-    // If upsert fails due to no unique constraint, try insert
     if (error.code === "42P10") {
       const { error: insertError } = await supabase
         .from("ring_daily_data")
@@ -131,7 +128,7 @@ export async function syncHealthKitData(userId?: string): Promise<SyncResult> {
     }
   }
 
-  // Update last_sync_at on integration
+  // Update last_sync_at
   await supabase
     .from("user_integrations")
     .update({ last_sync_at: new Date().toISOString(), last_error: null })
@@ -172,7 +169,6 @@ async function upsertIntegration(
   provider: WearableProvider,
   status: string
 ) {
-  // Check if integration already exists
   const { data: existing } = await supabase
     .from("user_integrations")
     .select("id")
