@@ -88,6 +88,9 @@ export async function syncHealthKitData(): Promise<SyncResult> {
 
   if (!session?.access_token || !session?.user?.id) {
     console.warn("[HK][AUTH] missing access_token; skipping write", {
+      category: "sem JWT",
+      table: "ring_daily_data",
+      operation: "upsert",
       userId: session?.user?.id ?? "NONE",
       hasToken: false,
     });
@@ -111,8 +114,8 @@ export async function syncHealthKitData(): Promise<SyncResult> {
     return { success: false, error: "Permissões Apple Health revogadas." };
   }
 
-  const today = new Date().toISOString().slice(0, 10);
-  const data = await readHealthKitData(today);
+  const fallbackDay = new Date().toISOString().slice(0, 10);
+  const data = await readHealthKitData(fallbackDay);
 
   if (!data) {
     return { success: true, metricsWritten: false };
@@ -131,10 +134,11 @@ export async function syncHealthKitData(): Promise<SyncResult> {
   if (data.previousDayActivity) metrics.activity_level = data.previousDayActivity;
 
   // ─── C) Build rows and validate ───
+  const day = (data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date) ? data.date : fallbackDay);
   const rows = [
     {
       user_id: userId,
-      day: today,
+      day,
       source_provider: "apple_health" as const,
       metrics,
       updated_at: new Date().toISOString(),
@@ -143,18 +147,22 @@ export async function syncHealthKitData(): Promise<SyncResult> {
 
   // Validate: day must be YYYY-MM-DD string, user_id must be present
   if (!rows[0].day || !rows[0].user_id) {
-    console.error("[HK][WRITE] ABORT: row missing day or user_id", {
+    console.error("[HK][PAYLOAD] invalid payload; skipping write", {
+      category: "payload inválido",
+      table: "ring_daily_data",
+      operation: "upsert",
+      hasToken,
+      rowsCount: rows.length,
       day: rows[0].day,
-      user_id: rows[0].user_id,
+      sampleUserId: rows[0].user_id,
     });
     return { success: false, error: "Payload inválido: day ou user_id ausente." };
   }
 
-  console.log("[HK][WRITE] table=ring_daily_data", {
+  console.log("[HK][WRITE] ring_daily_data preflight", {
     userId,
     hasToken,
     rowsCount: rows.length,
-    sampleRowKeys: Object.keys(rows[0]),
     sampleDay: rows[0].day,
     sampleUserId: rows[0].user_id,
   });
@@ -166,7 +174,13 @@ export async function syncHealthKitData(): Promise<SyncResult> {
       .upsert(rows[0], { onConflict: "user_id,day,source_provider" });
 
     if (error) {
+      const isRlsMismatch =
+        error.code === "42501" &&
+        (error.message?.toLowerCase().includes("row-level security") ||
+          error.message?.toLowerCase().includes("permission denied"));
+
       console.error("[HK][ERR] upsert failed", {
+        category: isRlsMismatch ? "RLS por mismatch de user_id" : "erro de escrita",
         table: "ring_daily_data",
         operation: "upsert",
         userId,
@@ -186,7 +200,13 @@ export async function syncHealthKitData(): Promise<SyncResult> {
           .insert(rows[0]);
 
         if (insertError) {
+          const isInsertRlsMismatch =
+            insertError.code === "42501" &&
+            (insertError.message?.toLowerCase().includes("row-level security") ||
+              insertError.message?.toLowerCase().includes("permission denied"));
+
           console.error("[HK][ERR] insert fallback failed", {
+            category: isInsertRlsMismatch ? "RLS por mismatch de user_id" : "erro de escrita",
             table: "ring_daily_data",
             operation: "insert",
             userId,
@@ -221,11 +241,23 @@ export async function syncHealthKitData(): Promise<SyncResult> {
 
     return { success: true, metricsWritten: Object.keys(metrics).length > 0 };
   } catch (err) {
+    const dbErr = err as { code?: string; message?: string; details?: string; hint?: string };
+    const isCatchRlsMismatch =
+      dbErr?.code === "42501" &&
+      (dbErr?.message?.toLowerCase().includes("row-level security") ||
+        dbErr?.message?.toLowerCase().includes("permission denied"));
+
     console.error("[HK][ERR] unexpected exception", {
       table: "ring_daily_data",
+      operation: "upsert",
       userId,
       hasToken,
-      error: err instanceof Error ? err.message : "unknown",
+      rowsCount: rows.length,
+      category: isCatchRlsMismatch ? "RLS por mismatch de user_id" : "erro inesperado",
+      code: dbErr?.code,
+      message: dbErr?.message ?? (err instanceof Error ? err.message : "unknown"),
+      details: dbErr?.details,
+      hint: dbErr?.hint,
     });
     toast({ title: "Falha ao sincronizar dados do Health", description: "Tente novamente mais tarde.", variant: "destructive" });
     return { success: false, error: err instanceof Error ? err.message : "Erro inesperado" };
