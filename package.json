@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "ios:update": "npm run build && npx cap sync ios",
+    "ios:update": "npm run build && npx cap sync ios && bash scripts/ios/patch-healthkit.sh",
     "ios:diag": "cd ios/App && (ls -la) && (test -f App.xcodeproj && echo USING_PROJECT || echo USING_WORKSPACE)"
   },
   "dependencies": {
