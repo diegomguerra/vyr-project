@@ -233,10 +233,17 @@ export async function syncHealthKitData(): Promise<SyncResult> {
 }
 
 /** Load integration status from DB */
-export async function getAppleHealthStatus(userId: string): Promise<{
+export async function getAppleHealthStatus(): Promise<{
   connected: boolean;
   lastSync: Date | null;
 }> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+
+  if (!userId) {
+    return { connected: false, lastSync: null };
+  }
+
   const { data } = await supabase
     .from("user_integrations")
     .select("status, last_sync_at")
