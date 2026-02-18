@@ -34,7 +34,11 @@ export async function connectAppleHealth(): Promise<SyncResult> {
     return { success: false, error: "Usuário não autenticado." };
   }
 
-  await upsertIntegration(user.id, "apple_health", "active");
+  const intResult = await upsertIntegration(user.id, "apple_health", "active");
+  if (intResult.error) {
+    toast({ title: "Erro na integração", description: intResult.error, variant: "destructive" });
+    return { success: false, error: intResult.error };
+  }
   const syncResult = await syncHealthKitData();
   return syncResult;
 }
@@ -197,11 +201,11 @@ export async function syncHealthKitData(): Promise<SyncResult> {
             details: insertError.details,
             hint: insertError.hint,
           });
-          toast({ title: "Falha ao sincronizar dados do Health", description: "Tente novamente mais tarde.", variant: "destructive" });
+        toast({ title: "Falha ao sincronizar dados do Health", description: `[${insertError.code}] ${insertError.message}`, variant: "destructive" });
           return { success: false, error: insertError.message };
         }
       } else {
-        toast({ title: "Falha ao sincronizar dados do Health", description: "Tente novamente mais tarde.", variant: "destructive" });
+        toast({ title: "Falha ao sincronizar dados do Health", description: `[${error.code}] ${error.message}`, variant: "destructive" });
         return { success: false, error: error.message };
       }
     }
@@ -227,7 +231,7 @@ export async function syncHealthKitData(): Promise<SyncResult> {
       hasToken,
       error: err instanceof Error ? err.message : "unknown",
     });
-    toast({ title: "Falha ao sincronizar dados do Health", description: "Tente novamente mais tarde.", variant: "destructive" });
+    toast({ title: "Falha ao sincronizar dados do Health", description: `[exception] ${err instanceof Error ? err.message : "unknown"}`, variant: "destructive" });
     return { success: false, error: err instanceof Error ? err.message : "Erro inesperado" };
   }
 }
@@ -265,16 +269,21 @@ async function upsertIntegration(
   userId: string,
   provider: WearableProvider,
   status: string
-) {
-  const { data: existing } = await supabase
+): Promise<{ error?: string }> {
+  const { data: existing, error: selectErr } = await supabase
     .from("user_integrations")
     .select("id")
     .eq("user_id", userId)
     .eq("provider", provider)
     .maybeSingle();
 
+  if (selectErr) {
+    console.error("[HK][upsertIntegration] select failed", { code: selectErr.code, message: selectErr.message });
+    return { error: `[select] ${selectErr.code}: ${selectErr.message}` };
+  }
+
   if (existing) {
-    await supabase
+    const { error: updateErr } = await supabase
       .from("user_integrations")
       .update({
         status,
@@ -282,8 +291,13 @@ async function upsertIntegration(
         last_error: null,
       })
       .eq("id", existing.id);
+
+    if (updateErr) {
+      console.error("[HK][upsertIntegration] update failed", { code: updateErr.code, message: updateErr.message });
+      return { error: `[update] ${updateErr.code}: ${updateErr.message}` };
+    }
   } else {
-    await supabase.from("user_integrations").insert({
+    const { error: insertErr } = await supabase.from("user_integrations").insert({
       user_id: userId,
       provider,
       status,
@@ -297,5 +311,12 @@ async function upsertIntegration(
         "workouts",
       ],
     });
+
+    if (insertErr) {
+      console.error("[HK][upsertIntegration] insert failed", { code: insertErr.code, message: insertErr.message });
+      return { error: `[insert] ${insertErr.code}: ${insertErr.message}` };
+    }
   }
+
+  return {};
 }
