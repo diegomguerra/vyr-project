@@ -1,4 +1,3 @@
-import animate from "tailwindcss-animate";
 import type { Config } from "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -154,5 +153,5 @@ export default {
       },
     },
   },
-plugins: [animate],
+  plugins: [require("tailwindcss-animate")],
 } satisfies Config;
