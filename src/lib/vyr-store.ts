@@ -275,8 +275,12 @@ export function useVYRStore() {
   const { data: dbIntegration } = useQuery({
     queryKey: ["user_integration_apple_health"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { connected: false, lastSync: null };
       return getAppleHealthStatus();
     },
+    refetchOnWindowFocus: true,
+    staleTime: 30_000,
   });
 
   const wearableConnection: WearableConnection = useMemo(() => {
