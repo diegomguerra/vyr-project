@@ -30,10 +30,12 @@ export function AvatarUpload({ currentUrl, onUploaded }: AvatarUploadProps) {
       const path = `${user.id}/avatar.${ext}`;
       const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
       if (error) throw error;
+
       const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
       onUploaded(urlData.publicUrl + "?t=" + Date.now());
-    } catch (err: any) {
-      toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Falha inesperada no upload.";
+      toast({ title: "Erro no upload", description: message, variant: "destructive" });
     } finally {
       setUploading(false);
     }

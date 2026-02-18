@@ -43,11 +43,14 @@ export function DoseCheckinPanel({ dose, dateISO, onSave, onClose, existingCheck
       taken,
       confounders,
     };
+
     if (taken) {
       fields.forEach((f) => {
-        (checkin as any)[f] = vals[f];
+        const key = f as keyof DoseCheckin;
+        (checkin as Record<keyof DoseCheckin, unknown>)[key] = vals[f];
       });
     }
+
     onSave(checkin);
     onClose();
   };
@@ -59,10 +62,7 @@ export function DoseCheckinPanel({ dose, dateISO, onSave, onClose, existingCheck
           <h3 className="text-lg sm:text-xl font-semibold text-vyr-white font-mono">{doseLabel(dose)}</h3>
           <StatusPill>{dateISO}</StatusPill>
         </div>
-        <button 
-          onClick={onClose}
-          className="p-1.5 rounded-lg hover:bg-vyr-gray-800/50 transition-colors"
-        >
+        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-vyr-gray-800/50 transition-colors">
           <X className="w-5 h-5 text-vyr-gray-400" />
         </button>
       </div>
@@ -73,9 +73,11 @@ export function DoseCheckinPanel({ dose, dateISO, onSave, onClose, existingCheck
         <div className="flex gap-3">
           <button
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium font-mono transition-all border
-              ${taken 
-                ? "bg-vyr-accent/20 text-vyr-accent border-vyr-accent/40" 
-                : "bg-vyr-gray-800/30 text-vyr-gray-400 border-vyr-gray-700/30 hover:text-vyr-white"}`}
+              ${
+                taken
+                  ? "bg-vyr-accent/20 text-vyr-accent border-vyr-accent/40"
+                  : "bg-vyr-gray-800/30 text-vyr-gray-400 border-vyr-gray-700/30 hover:text-vyr-white"
+              }`}
             onClick={() => setTaken(true)}
           >
             <Check className="w-4 h-4" />
@@ -83,9 +85,11 @@ export function DoseCheckinPanel({ dose, dateISO, onSave, onClose, existingCheck
           </button>
           <button
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium font-mono transition-all border
-              ${!taken 
-                ? "bg-vyr-gray-600/20 text-vyr-gray-200 border-vyr-gray-500/40" 
-                : "bg-vyr-gray-800/30 text-vyr-gray-400 border-vyr-gray-700/30 hover:text-vyr-white"}`}
+              ${
+                !taken
+                  ? "bg-vyr-gray-600/20 text-vyr-gray-200 border-vyr-gray-500/40"
+                  : "bg-vyr-gray-800/30 text-vyr-gray-400 border-vyr-gray-700/30 hover:text-vyr-white"
+              }`}
             onClick={() => setTaken(false)}
           >
             <X className="w-4 h-4" />
@@ -123,8 +127,8 @@ export function DoseCheckinPanel({ dose, dateISO, onSave, onClose, existingCheck
         <ConfoundersToggle value={confounders} onChange={setConfounders} />
       </div>
 
-      <button 
-        className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-vyr-gray-100 text-vyr-black hover:bg-vyr-white transition-all font-mono" 
+      <button
+        className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-vyr-gray-100 text-vyr-black hover:bg-vyr-white transition-all font-mono"
         onClick={handleSave}
       >
         Salvar registro

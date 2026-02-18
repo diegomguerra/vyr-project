@@ -27,3 +27,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# iOS stray configs
+ios/App/App/config *.xml

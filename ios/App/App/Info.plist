@@ -24,6 +24,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>O VYR Labs precisa acessar seus dados de saúde para exibir métricas e análises personalizadas dentro do aplicativo.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>O VYR Labs precisa registrar dados no HealthKit para manter suas informações de saúde sincronizadas corretamente.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

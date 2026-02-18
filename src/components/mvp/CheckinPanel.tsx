@@ -40,9 +40,12 @@ export function CheckinPanel({ period, dateISO, onSave }: CheckinPanelProps) {
       taken: true,
       confounders,
     };
+
     fields.forEach((f) => {
-      (checkin as any)[f] = vals[f];
+      const key = f as keyof Checkin;
+      (checkin as Record<keyof Checkin, unknown>)[key] = vals[f];
     });
+
     onSave(checkin);
   };
 
@@ -77,8 +80,8 @@ export function CheckinPanel({ period, dateISO, onSave }: CheckinPanelProps) {
         <ConfoundersToggle value={confounders} onChange={setConfounders} />
       </div>
 
-      <button 
-        className="w-full mt-4 sm:mt-5 px-4 py-3 rounded-xl text-sm font-medium bg-vyr-gray-100 text-vyr-black hover:bg-vyr-white transition-all font-mono" 
+      <button
+        className="w-full mt-4 sm:mt-5 px-4 py-3 rounded-xl text-sm font-medium bg-vyr-gray-100 text-vyr-black hover:bg-vyr-white transition-all font-mono"
         onClick={handleSave}
       >
         Salvar check-in
