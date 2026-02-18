@@ -52,7 +52,6 @@ export default function Integrations({
   const isJStyleConnected = connection.connected && connection.provider === "jstyle";
 
   const handleConnect = async () => {
-    console.log("[CTA] clicked: Connect Apple Health", { loading, isAppleHealthConnected });
     if (!Capacitor.isNativePlatform()) {
       toast.info("Abra o app no seu iPhone para conectar o Apple Health.");
       return;
@@ -177,8 +176,8 @@ export default function Integrations({
               /* Disconnected state */
               <button
                 onClick={handleConnect}
-                disabled={false}
-                className="relative z-50 pointer-events-auto w-full bg-gradient-to-r from-pink-500/20 to-red-500/20 border border-pink-500/30 rounded-xl py-3 text-vyr-text-primary text-sm font-medium transition-all active:scale-[0.98] hover:from-pink-500/30 hover:to-red-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-pink-500/20 to-red-500/20 border border-pink-500/30 rounded-xl py-3 text-vyr-text-primary text-sm font-medium transition-all active:scale-[0.98] hover:from-pink-500/30 hover:to-red-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Conectar Apple Health
