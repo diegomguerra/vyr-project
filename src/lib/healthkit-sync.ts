@@ -10,7 +10,6 @@ import {
 } from "./healthkit";
 import { toast } from "@/hooks/use-toast";
 import type { WearableProvider } from "./vyr-types";
-import { toDayString } from "./day-string";
 
 export interface SyncResult {
   success: boolean;
@@ -54,23 +53,30 @@ export async function disconnectAppleHealth(): Promise<void> {
 
 /** Sync today's HealthKit data to ring_daily_data */
 export async function syncHealthKitData(): Promise<SyncResult> {
-  // Always use fresh session to guarantee auth.uid() matches in RLS
-  let userId: string | undefined;
+  // 1) Check current session & access_token
+  const { data: sessionData } = await supabase.auth.getSession();
+  let session = sessionData?.session;
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user?.id) {
-    userId = session.user.id;
-  } else {
-    // Session stale — try refresh
+  console.log("[HealthKit Sync] access_token present?", !!session?.access_token);
+  console.log("[HealthKit Sync] user id", session?.user?.id);
+
+  // 2) If no access_token, try refresh once
+  if (!session?.access_token) {
+    console.log("[HealthKit Sync] No access_token — attempting refreshSession...");
     const { data: refreshData } = await supabase.auth.refreshSession();
-    userId = refreshData.session?.user?.id;
+    session = refreshData.session;
+    console.log("[HealthKit Sync] After refresh — access_token present?", !!session?.access_token);
+    console.log("[HealthKit Sync] After refresh — user id", session?.user?.id);
   }
 
-  if (!userId) {
-    console.error("[HealthKit Sync] No valid session for RLS. Cannot write data.");
+  // 3) Abort if still no valid token — never write as anon
+  if (!session?.access_token || !session?.user?.id) {
+    console.error("[HealthKit Sync] No access_token available — aborting write.");
     return { success: false, error: "Sessão expirada. Faça login novamente." };
   }
 
+  // 4) userId always from session — never accept external user_id
+  const userId = session.user.id;
   console.log("[HealthKit Sync] Authenticated as:", userId);
 
   const authorized = await isHealthKitAuthorized();
@@ -78,14 +84,12 @@ export async function syncHealthKitData(): Promise<SyncResult> {
     return { success: false, error: "Permissões Apple Health revogadas." };
   }
 
-  const today = toDayString(new Date());
+  const today = new Date().toISOString().slice(0, 10);
   const data = await readHealthKitData(today);
 
   if (!data) {
     return { success: true, metricsWritten: false };
   }
-
-  const day = toDayString(data.date || today);
 
   // Build metrics JSONB
   const metrics: Record<string, any> = {};
@@ -103,7 +107,7 @@ export async function syncHealthKitData(): Promise<SyncResult> {
   try {
     const upsertPayload = {
       user_id: userId,
-      day,
+      day: today,
       source_provider: "apple_health",
       metrics,
       updated_at: new Date().toISOString(),
@@ -111,9 +115,10 @@ export async function syncHealthKitData(): Promise<SyncResult> {
 
     console.log("[HealthKit Sync] Upserting ring_daily_data", {
       user_id: userId,
-      day,
-      rowsCount: 1,
+      day: today,
       metricsCount: Object.keys(metrics).length,
+      batchSize: 1,
+      accessTokenPresent: true,
     });
 
     const { error } = await supabase
@@ -125,8 +130,6 @@ export async function syncHealthKitData(): Promise<SyncResult> {
         table: "ring_daily_data",
         operation: "upsert",
         userId,
-        day,
-        rowsCount: 1,
         code: error.code,
         message: error.message,
         details: error.details,
@@ -137,15 +140,13 @@ export async function syncHealthKitData(): Promise<SyncResult> {
         console.log("[HealthKit Sync] Fallback to insert (42P10)");
         const { error: insertError } = await supabase
           .from("ring_daily_data")
-          .insert({ user_id: userId, day, source_provider: "apple_health", metrics });
+          .insert({ user_id: userId, day: today, source_provider: "apple_health", metrics });
 
         if (insertError) {
           console.error("[HealthKit Sync] Insert fallback failed:", {
             table: "ring_daily_data",
             operation: "insert",
             userId,
-            day,
-            rowsCount: 1,
             code: insertError.code,
             message: insertError.message,
             details: insertError.details,
@@ -167,10 +168,10 @@ export async function syncHealthKitData(): Promise<SyncResult> {
       .eq("user_id", userId)
       .eq("provider", "apple_health");
 
-    console.log("[HealthKit Sync] Success", { userId, day, rowsCount: 1, metricsWritten: Object.keys(metrics).length });
+    console.log("[HealthKit Sync] Success. Metrics written:", Object.keys(metrics).length);
     return { success: true, metricsWritten: Object.keys(metrics).length > 0 };
   } catch (err) {
-    console.error("[HealthKit Sync] Unexpected error", { userId, day, rowsCount: 1, err });
+    console.error("[HealthKit Sync] Unexpected error:", err);
     toast({ title: "Falha ao sincronizar dados do Health", description: "Tente novamente mais tarde.", variant: "destructive" });
     return { success: false, error: err instanceof Error ? err.message : "Erro inesperado" };
   }
