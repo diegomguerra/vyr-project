@@ -8,6 +8,7 @@ import {
   isHealthKitAuthorized,
   readHealthKitData,
 } from "./healthkit";
+import { toast } from "@/hooks/use-toast";
 import type { WearableProvider } from "./vyr-types";
 
 export interface SyncResult {
@@ -96,46 +97,75 @@ export async function syncHealthKitData(): Promise<SyncResult> {
   if (data.previousDayActivity) metrics.activity_level = data.previousDayActivity;
 
   // Upsert — userId is guaranteed to match auth.uid() from the active session
-  const { error } = await supabase
-    .from("ring_daily_data")
-    .upsert(
-      {
-        user_id: userId,
-        day: today,
-        source_provider: "apple_health",
-        metrics,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,day,source_provider" }
-    );
+  try {
+    const upsertPayload = {
+      user_id: userId,
+      day: today,
+      source_provider: "apple_health",
+      metrics,
+      updated_at: new Date().toISOString(),
+    };
 
-  if (error) {
-    console.error("[HealthKit Sync] Error writing ring_daily_data:", error);
-    if (error.code === "42P10") {
-      const { error: insertError } = await supabase
-        .from("ring_daily_data")
-        .insert({
-          user_id: userId,
-          day: today,
-          source_provider: "apple_health",
-          metrics,
-        });
-      if (insertError) {
-        return { success: false, error: insertError.message };
+    console.log("[HealthKit Sync] Upserting ring_daily_data", {
+      user_id: userId,
+      day: today,
+      metricsCount: Object.keys(metrics).length,
+    });
+
+    const { error } = await supabase
+      .from("ring_daily_data")
+      .upsert(upsertPayload, { onConflict: "user_id,day,source_provider" });
+
+    if (error) {
+      console.error("[HealthKit Sync] Upsert failed:", {
+        table: "ring_daily_data",
+        operation: "upsert",
+        userId,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+
+      if (error.code === "42P10") {
+        console.log("[HealthKit Sync] Fallback to insert (42P10)");
+        const { error: insertError } = await supabase
+          .from("ring_daily_data")
+          .insert({ user_id: userId, day: today, source_provider: "apple_health", metrics });
+
+        if (insertError) {
+          console.error("[HealthKit Sync] Insert fallback failed:", {
+            table: "ring_daily_data",
+            operation: "insert",
+            userId,
+            code: insertError.code,
+            message: insertError.message,
+            details: insertError.details,
+            hint: insertError.hint,
+          });
+          toast({ title: "Falha ao sincronizar dados do Health", description: "Tente novamente mais tarde.", variant: "destructive" });
+          return { success: false, error: insertError.message };
+        }
+      } else {
+        toast({ title: "Falha ao sincronizar dados do Health", description: "Tente novamente mais tarde.", variant: "destructive" });
+        return { success: false, error: error.message };
       }
-    } else {
-      return { success: false, error: error.message };
     }
+
+    // Update last_sync_at
+    await supabase
+      .from("user_integrations")
+      .update({ last_sync_at: new Date().toISOString(), last_error: null })
+      .eq("user_id", userId)
+      .eq("provider", "apple_health");
+
+    console.log("[HealthKit Sync] Success. Metrics written:", Object.keys(metrics).length);
+    return { success: true, metricsWritten: Object.keys(metrics).length > 0 };
+  } catch (err) {
+    console.error("[HealthKit Sync] Unexpected error:", err);
+    toast({ title: "Falha ao sincronizar dados do Health", description: "Tente novamente mais tarde.", variant: "destructive" });
+    return { success: false, error: err instanceof Error ? err.message : "Erro inesperado" };
   }
-
-  // Update last_sync_at
-  await supabase
-    .from("user_integrations")
-    .update({ last_sync_at: new Date().toISOString(), last_error: null })
-    .eq("user_id", userId)
-    .eq("provider", "apple_health");
-
-  return { success: true, metricsWritten: Object.keys(metrics).length > 0 };
 }
 
 /** Load integration status from DB */
