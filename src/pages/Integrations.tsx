@@ -4,13 +4,13 @@ import { useState } from "react";
 import { ChevronLeft, Heart, Activity, Moon, Footprints, Dumbbell, Check, Info, Loader2 } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import type { WearableConnection, WearableProvider } from "@/lib/vyr-types";
-import { connectAppleHealth, disconnectAppleHealth, syncHealthKitData } from "@/lib/healthkit-sync";
+import { disconnectAppleHealth, syncHealthKitData } from "@/lib/healthkit-sync";
 import { toast } from "sonner";
 
 interface IntegrationsProps {
   connection: WearableConnection;
   onBack: () => void;
-  onConnectAppleHealth: () => void;
+  onConnectAppleHealth: () => Promise<void>;
   onDisconnectAppleHealth: () => void;
   onSelectProvider: (provider: WearableProvider) => void;
 }
@@ -56,16 +56,10 @@ export default function Integrations({
       toast.info("Abra o app no seu iPhone para conectar o Apple Health.");
       return;
     }
-
     setLoading(true);
     try {
-      const result = await connectAppleHealth();
-      if (result.success) {
-        onConnectAppleHealth();
-        toast.success("Apple Health conectado com sucesso!");
-      } else {
-        toast.error(result.error ?? "Erro ao conectar Apple Health.");
-      }
+      // Delegate to parent which calls connectWearable → connectAppleHealth + invalidateQueries
+      await onConnectAppleHealth();
     } catch {
       toast.error("Erro inesperado ao conectar.");
     } finally {

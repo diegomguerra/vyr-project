@@ -251,8 +251,8 @@ function VYRApp() {
         <Integrations
           connection={wearableConnection}
           onBack={goSettings}
-          onConnectAppleHealth={() => {
-            connectWearable("apple_health");
+          onConnectAppleHealth={async () => {
+            await connectWearable("apple_health");
           }}
           onDisconnectAppleHealth={() => {
             disconnectWearable();
