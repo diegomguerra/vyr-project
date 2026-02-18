@@ -74,16 +74,22 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/c
 
 ## iOS HealthKit
 
-Para evitar regressões do HealthKit após sincronizações do Capacitor, execute sempre:
+Para evitar regressões do HealthKit após sincronizações do Capacitor, execute a sequência local recomendada:
 
 ```sh
-npm run ios:update
+npm ci
+npm run build
+npx cap sync ios
+npm run ios:plist:patch
+npm run ios:entitlements:patch
 ```
 
-Esse fluxo roda o build, sincroniza o iOS e aplica um patch idempotente que garante:
+Depois, abra o projeto no Xcode, rode **Product > Clean Build Folder** e então **Run**.
 
-- `NSHealthShareUsageDescription` no `Info.plist`.
-- `NSHealthUpdateUsageDescription` no `Info.plist`.
-- `com.apple.developer.healthkit = true` no `App.entitlements`.
+Esse fluxo garante:
+
+- `NSHealthShareUsageDescription` no `ios/App/App/Info.plist`.
+- `NSHealthUpdateUsageDescription` no `ios/App/App/Info.plist`.
+- `com.apple.developer.healthkit = true` no `ios/App/App/App.entitlements`.
 
 Com isso, evitamos falhas de autorização/crash por ausência de chaves obrigatórias do HealthKit após `npx cap sync ios`.

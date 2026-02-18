@@ -55,23 +55,33 @@ export async function disconnectAppleHealth(): Promise<void> {
 /** Sync today's HealthKit data to ring_daily_data */
 export async function syncHealthKitData(): Promise<SyncResult> {
   // Always use fresh session to guarantee auth.uid() matches in RLS
-  let userId: string | undefined;
+  let session = (await supabase.auth.getSession()).data.session;
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user?.id) {
-    userId = session.user.id;
-  } else {
+  if (!session) {
     // Session stale — try refresh
-    const { data: refreshData } = await supabase.auth.refreshSession();
-    userId = refreshData.session?.user?.id;
+    session = (await supabase.auth.refreshSession()).data.session;
   }
 
-  if (!userId) {
-    console.error("[HealthKit Sync] No valid session for RLS. Cannot write data.");
+  const userId = session?.user?.id;
+  const accessToken = session?.access_token;
+  const hasAccessToken = Boolean(accessToken);
+
+  if (!userId || !hasAccessToken) {
+    console.error("[HealthKit Sync] missing access_token; skipping write", {
+      hasSession: Boolean(session),
+      hasUserId: Boolean(userId),
+      hasAccessToken,
+      rowsCount: 0,
+    });
+    toast({
+      title: "Sessão expirada",
+      description: "Faça login novamente para sincronizar o Apple Health.",
+      variant: "destructive",
+    });
     return { success: false, error: "Sessão expirada. Faça login novamente." };
   }
 
-  console.log("[HealthKit Sync] Authenticated as:", userId);
+  console.log("[HealthKit Sync] Authenticated as:", userId, { hasAccessToken });
 
   const authorized = await isHealthKitAuthorized();
   if (!authorized) {
@@ -103,30 +113,33 @@ export async function syncHealthKitData(): Promise<SyncResult> {
   try {
     const upsertPayload = {
       user_id: userId,
-      day,
+      day: day || toDayString(new Date()),
       source_provider: "apple_health",
       metrics,
       updated_at: new Date().toISOString(),
     };
+    const rows = [upsertPayload];
 
     console.log("[HealthKit Sync] Upserting ring_daily_data", {
       user_id: userId,
-      day,
-      rowsCount: 1,
+      day: upsertPayload.day,
+      hasAccessToken,
+      rowsCount: rows.length,
       metricsCount: Object.keys(metrics).length,
     });
 
     const { error } = await supabase
       .from("ring_daily_data")
-      .upsert(upsertPayload, { onConflict: "user_id,day,source_provider" });
+      .upsert(rows, { onConflict: "user_id,day,source_provider" });
 
     if (error) {
       console.error("[HealthKit Sync] Upsert failed:", {
         table: "ring_daily_data",
         operation: "upsert",
         userId,
-        day,
-        rowsCount: 1,
+        day: upsertPayload.day,
+        hasAccessToken,
+        rowsCount: rows.length,
         code: error.code,
         message: error.message,
         details: error.details,
@@ -137,15 +150,16 @@ export async function syncHealthKitData(): Promise<SyncResult> {
         console.log("[HealthKit Sync] Fallback to insert (42P10)");
         const { error: insertError } = await supabase
           .from("ring_daily_data")
-          .insert({ user_id: userId, day, source_provider: "apple_health", metrics });
+          .insert(rows);
 
         if (insertError) {
           console.error("[HealthKit Sync] Insert fallback failed:", {
             table: "ring_daily_data",
             operation: "insert",
             userId,
-            day,
-            rowsCount: 1,
+            day: upsertPayload.day,
+            hasAccessToken,
+            rowsCount: rows.length,
             code: insertError.code,
             message: insertError.message,
             details: insertError.details,
@@ -167,20 +181,32 @@ export async function syncHealthKitData(): Promise<SyncResult> {
       .eq("user_id", userId)
       .eq("provider", "apple_health");
 
-    console.log("[HealthKit Sync] Success", { userId, day, rowsCount: 1, metricsWritten: Object.keys(metrics).length });
+    console.log("[HealthKit Sync] Success", {
+      userId,
+      day: upsertPayload.day,
+      hasAccessToken,
+      rowsCount: rows.length,
+      metricsWritten: Object.keys(metrics).length,
+    });
     return { success: true, metricsWritten: Object.keys(metrics).length > 0 };
   } catch (err) {
-    console.error("[HealthKit Sync] Unexpected error", { userId, day, rowsCount: 1, err });
+    console.error("[HealthKit Sync] Unexpected error", { userId, day, hasAccessToken, rowsCount: 1, err });
     toast({ title: "Falha ao sincronizar dados do Health", description: "Tente novamente mais tarde.", variant: "destructive" });
     return { success: false, error: err instanceof Error ? err.message : "Erro inesperado" };
   }
 }
 
 /** Load integration status from DB */
-export async function getAppleHealthStatus(userId: string): Promise<{
+export async function getAppleHealthStatus(): Promise<{
   connected: boolean;
   lastSync: Date | null;
 }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return { connected: false, lastSync: null };
+  }
+
   const { data } = await supabase
     .from("user_integrations")
     .select("status, last_sync_at")

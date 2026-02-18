@@ -277,7 +277,7 @@ export function useVYRStore() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
-      return getAppleHealthStatus(user.id);
+      return getAppleHealthStatus();
     },
   });
 
