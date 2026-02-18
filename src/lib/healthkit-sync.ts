@@ -11,10 +11,6 @@ import {
 import { toast } from "@/hooks/use-toast";
 import type { WearableProvider } from "./vyr-types";
 
-function classifyWriteError(code?: string | null): "RLS mismatch" | "erro de escrita" {
-  return code === "42501" ? "RLS mismatch" : "erro de escrita";
-}
-
 export interface SyncResult {
   success: boolean;
   error?: string;
@@ -180,7 +176,6 @@ export async function syncHealthKitData(): Promise<SyncResult> {
         message: error.message,
         details: error.details,
         hint: error.hint,
-        category: classifyWriteError(error.code),
       });
 
       // Fallback for 42P10 (missing unique constraint match)
@@ -201,7 +196,6 @@ export async function syncHealthKitData(): Promise<SyncResult> {
             message: insertError.message,
             details: insertError.details,
             hint: insertError.hint,
-            category: classifyWriteError(insertError.code),
           });
           toast({ title: "Falha ao sincronizar dados do Health", description: "Tente novamente mais tarde.", variant: "destructive" });
           return { success: false, error: insertError.message };
@@ -232,40 +226,36 @@ export async function syncHealthKitData(): Promise<SyncResult> {
       userId,
       hasToken,
       error: err instanceof Error ? err.message : "unknown",
-      category: "erro de escrita",
     });
     toast({ title: "Falha ao sincronizar dados do Health", description: "Tente novamente mais tarde.", variant: "destructive" });
     return { success: false, error: err instanceof Error ? err.message : "Erro inesperado" };
   }
 }
+
+/** Load integration status from DB (gets userId from current session) */
 export async function getAppleHealthStatus(): Promise<{
   connected: boolean;
   lastSync: Date | null;
 }> {
-  const { data } = await supabase.auth.getSession();
-  const userId = data.session?.user?.id;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { connected: false, lastSync: null };
 
-  if (!userId) {
-    return { connected: false, lastSync: null };
-  }
-
-  const { data: integration } = await supabase
+  const { data } = await supabase
     .from("user_integrations")
     .select("status, last_sync_at")
-    .eq("user_id", userId)
+    .eq("user_id", user.id)
     .eq("provider", "apple_health")
     .maybeSingle();
 
-  if (!integration || integration.status !== "active") {
+  if (!data || data.status !== "active") {
     return { connected: false, lastSync: null };
   }
 
   return {
     connected: true,
-    lastSync: integration.last_sync_at ? new Date(integration.last_sync_at) : null,
+    lastSync: data.last_sync_at ? new Date(data.last_sync_at) : null,
   };
 }
-
 
 // ============================================================
 // Internal
