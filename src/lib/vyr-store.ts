@@ -274,7 +274,9 @@ export function useVYRStore() {
   // Wearable connection state — loaded from user_integrations
   const { data: dbIntegration } = useQuery({
     queryKey: ["user_integration_apple_health"],
-    queryFn: async () => getAppleHealthStatus(),
+    queryFn: async () => {
+      return getAppleHealthStatus();
+    },
   });
 
   const wearableConnection: WearableConnection = useMemo(() => {
