@@ -71,3 +71,19 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## iOS HealthKit
+
+Para evitar regressões do HealthKit após sincronizações do Capacitor, execute sempre:
+
+```sh
+npm run ios:update
+```
+
+Esse fluxo roda o build, sincroniza o iOS e aplica um patch idempotente que garante:
+
+- `NSHealthShareUsageDescription` no `Info.plist`.
+- `NSHealthUpdateUsageDescription` no `Info.plist`.
+- `com.apple.developer.healthkit = true` no `App.entitlements`.
+
+Com isso, evitamos falhas de autorização/crash por ausência de chaves obrigatórias do HealthKit após `npx cap sync ios`.
