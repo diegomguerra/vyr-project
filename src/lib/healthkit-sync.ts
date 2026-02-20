@@ -9,13 +9,33 @@ import {
   readHealthKitData,
 } from "./healthkit";
 import { toast } from "@/hooks/use-toast";
-import type { WearableProvider } from "./vyr-types";
 
 export interface SyncResult {
   success: boolean;
   error?: string;
   metricsWritten?: boolean;
 }
+
+// ============================================================
+// Shared session helper — always validates + refreshes token
+// ============================================================
+
+async function getValidSession() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  let session = sessionData?.session;
+
+  if (!session?.access_token) {
+    console.log("[HK][AUTH] No access_token — attempting refreshSession...");
+    const { data: refreshData } = await supabase.auth.refreshSession();
+    session = refreshData.session;
+  }
+
+  return session;
+}
+
+// ============================================================
+// Public API
+// ============================================================
 
 /** Full connect flow: check availability → request permissions → initial sync → persist integration */
 export async function connectAppleHealth(): Promise<SyncResult> {
@@ -29,37 +49,68 @@ export async function connectAppleHealth(): Promise<SyncResult> {
     return { success: false, error: "Permissões do Apple Health não foram concedidas." };
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { success: false, error: "Usuário não autenticado." };
+  const session = await getValidSession();
+
+  const tokenPreview = session?.access_token
+    ? `${session.access_token.slice(0, 6)}...(len=${session.access_token.length})`
+    : "NONE";
+
+  console.log("[HK][connectAppleHealth][AUTH]", {
+    userId: session?.user?.id ?? "NONE",
+    hasToken: !!session?.access_token,
+    tokenPreview,
+  });
+
+  if (!session?.access_token || !session?.user?.id) {
+    toast({ title: "Sessão expirada", description: "Faça login novamente.", variant: "destructive" });
+    return { success: false, error: "Sessão expirada. Faça login novamente." };
   }
 
-  const intResult = await upsertIntegration(user.id, "apple_health", "active");
-  if (intResult.error) {
-    toast({ title: "Erro na integração", description: intResult.error, variant: "destructive" });
-    return { success: false, error: intResult.error };
+  const userId = session.user.id;
+
+  // Atomic upsert — no race condition
+  const { error: upsertErr } = await supabase
+    .from("user_integrations")
+    .upsert(
+      {
+        user_id: userId,
+        provider: "apple_health",
+        status: "active",
+        last_error: null,
+        scopes: ["heart_rate", "hrv", "sleep", "steps", "spo2", "body_temperature", "workouts"],
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,provider" }
+    );
+
+  if (upsertErr) {
+    console.error("[HK][connectAppleHealth][ERR] upsert user_integrations failed", {
+      code: upsertErr.code,
+      message: upsertErr.message,
+    });
+    toast({ title: "Erro na integração", description: `[${upsertErr.code}] ${upsertErr.message}`, variant: "destructive" });
+    return { success: false, error: upsertErr.message };
   }
-  const syncResult = await syncHealthKitData();
-  return syncResult;
+
+  return syncHealthKitData();
 }
 
 /** Disconnect Apple Health */
 export async function disconnectAppleHealth(): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  const session = await getValidSession();
+  if (!session?.user?.id) return;
 
   await supabase
     .from("user_integrations")
     .update({ status: "disconnected", updated_at: new Date().toISOString() })
-    .eq("user_id", user.id)
+    .eq("user_id", session.user.id)
     .eq("provider", "apple_health");
 }
 
 /** Sync today's HealthKit data to ring_daily_data */
 export async function syncHealthKitData(): Promise<SyncResult> {
   // ─── A) Auth snapshot ───
-  const { data: sessionData } = await supabase.auth.getSession();
-  let session = sessionData?.session;
+  const session = await getValidSession();
 
   const tokenPreview = session?.access_token
     ? `${session.access_token.slice(0, 6)}...(len=${session.access_token.length})`
@@ -72,29 +123,8 @@ export async function syncHealthKitData(): Promise<SyncResult> {
     expiresAt: session?.expires_at ?? "NONE",
   });
 
-  // ─── B) Refresh if no token ───
-  if (!session?.access_token) {
-    console.log("[HK][AUTH] No access_token — attempting refreshSession...");
-    const { data: refreshData } = await supabase.auth.refreshSession();
-    session = refreshData.session;
-
-    const refreshTokenPreview = session?.access_token
-      ? `${session.access_token.slice(0, 6)}...(len=${session.access_token.length})`
-      : "NONE";
-
-    console.log("[HK][AUTH] After refresh", {
-      userId: session?.user?.id ?? "NONE",
-      hasToken: !!session?.access_token,
-      tokenPreview: refreshTokenPreview,
-      expiresAt: session?.expires_at ?? "NONE",
-    });
-  }
-
   if (!session?.access_token || !session?.user?.id) {
-    console.warn("[HK][AUTH] missing access_token; skipping write", {
-      userId: session?.user?.id ?? "NONE",
-      hasToken: false,
-    });
+    console.warn("[HK][AUTH] missing access_token; skipping write");
     toast({
       title: "Falha ao autenticar",
       description: "Faça login novamente.",
@@ -104,7 +134,6 @@ export async function syncHealthKitData(): Promise<SyncResult> {
   }
 
   const userId = session.user.id;
-  const hasToken = true;
 
   // ─── E) Client sanity check ───
   console.log("[HK][CLIENT] supabaseUrl present?", !!(supabase as any)?.supabaseUrl);
@@ -135,47 +164,33 @@ export async function syncHealthKitData(): Promise<SyncResult> {
   if (data.previousDayActivity) metrics.activity_level = data.previousDayActivity;
 
   // ─── C) Build rows and validate ───
-  const rows = [
-    {
-      user_id: userId,
-      day: today,
-      source_provider: "apple_health" as const,
-      metrics,
-      updated_at: new Date().toISOString(),
-    },
-  ];
+  const row = {
+    user_id: userId,
+    day: today,
+    source_provider: "apple_health" as const,
+    metrics,
+    updated_at: new Date().toISOString(),
+  };
 
-  // Validate: day must be YYYY-MM-DD string, user_id must be present
-  if (!rows[0].day || !rows[0].user_id) {
-    console.error("[HK][WRITE] ABORT: row missing day or user_id", {
-      day: rows[0].day,
-      user_id: rows[0].user_id,
-    });
+  if (!row.day || !row.user_id) {
+    console.error("[HK][WRITE] ABORT: row missing day or user_id", { day: row.day, user_id: row.user_id });
     return { success: false, error: "Payload inválido: day ou user_id ausente." };
   }
 
   console.log("[HK][WRITE] table=ring_daily_data", {
     userId,
-    hasToken,
-    rowsCount: rows.length,
-    sampleRowKeys: Object.keys(rows[0]),
-    sampleDay: rows[0].day,
-    sampleUserId: rows[0].user_id,
+    rowKeys: Object.keys(row),
+    day: row.day,
   });
 
   // ─── D) Upsert + result logging ───
   try {
     const { error } = await supabase
       .from("ring_daily_data")
-      .upsert(rows[0], { onConflict: "user_id,day,source_provider" });
+      .upsert(row, { onConflict: "user_id,day,source_provider" });
 
     if (error) {
       console.error("[HK][ERR] upsert failed", {
-        table: "ring_daily_data",
-        operation: "upsert",
-        userId,
-        hasToken,
-        rowsCount: rows.length,
         code: error.code,
         message: error.message,
         details: error.details,
@@ -185,23 +200,14 @@ export async function syncHealthKitData(): Promise<SyncResult> {
       // Fallback for 42P10 (missing unique constraint match)
       if (error.code === "42P10") {
         console.log("[HK][WRITE] Fallback to plain insert (42P10)");
-        const { error: insertError } = await supabase
-          .from("ring_daily_data")
-          .insert(rows[0]);
+        const { error: insertError } = await supabase.from("ring_daily_data").insert(row);
 
         if (insertError) {
           console.error("[HK][ERR] insert fallback failed", {
-            table: "ring_daily_data",
-            operation: "insert",
-            userId,
-            hasToken,
-            rowsCount: rows.length,
             code: insertError.code,
             message: insertError.message,
-            details: insertError.details,
-            hint: insertError.hint,
           });
-        toast({ title: "Falha ao sincronizar dados do Health", description: `[${insertError.code}] ${insertError.message}`, variant: "destructive" });
+          toast({ title: "Falha ao sincronizar dados do Health", description: `[${insertError.code}] ${insertError.message}`, variant: "destructive" });
           return { success: false, error: insertError.message };
         }
       } else {
@@ -217,18 +223,11 @@ export async function syncHealthKitData(): Promise<SyncResult> {
       .eq("user_id", userId)
       .eq("provider", "apple_health");
 
-    console.log("[HK][OK] wrote rows", {
-      rowsCount: rows.length,
-      table: "ring_daily_data",
-      userId,
-    });
+    console.log("[HK][OK] wrote row", { table: "ring_daily_data", userId, day: today });
 
     return { success: true, metricsWritten: Object.keys(metrics).length > 0 };
   } catch (err) {
     console.error("[HK][ERR] unexpected exception", {
-      table: "ring_daily_data",
-      userId,
-      hasToken,
       error: err instanceof Error ? err.message : "unknown",
     });
     toast({ title: "Falha ao sincronizar dados do Health", description: `[exception] ${err instanceof Error ? err.message : "unknown"}`, variant: "destructive" });
@@ -241,13 +240,13 @@ export async function getAppleHealthStatus(): Promise<{
   connected: boolean;
   lastSync: Date | null;
 }> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { connected: false, lastSync: null };
+  const session = await getValidSession();
+  if (!session?.user?.id) return { connected: false, lastSync: null };
 
   const { data } = await supabase
     .from("user_integrations")
     .select("status, last_sync_at")
-    .eq("user_id", user.id)
+    .eq("user_id", session.user.id)
     .eq("provider", "apple_health")
     .maybeSingle();
 
@@ -259,64 +258,4 @@ export async function getAppleHealthStatus(): Promise<{
     connected: true,
     lastSync: data.last_sync_at ? new Date(data.last_sync_at) : null,
   };
-}
-
-// ============================================================
-// Internal
-// ============================================================
-
-async function upsertIntegration(
-  userId: string,
-  provider: WearableProvider,
-  status: string
-): Promise<{ error?: string }> {
-  const { data: existing, error: selectErr } = await supabase
-    .from("user_integrations")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("provider", provider)
-    .maybeSingle();
-
-  if (selectErr) {
-    console.error("[HK][upsertIntegration] select failed", { code: selectErr.code, message: selectErr.message });
-    return { error: `[select] ${selectErr.code}: ${selectErr.message}` };
-  }
-
-  if (existing) {
-    const { error: updateErr } = await supabase
-      .from("user_integrations")
-      .update({
-        status,
-        updated_at: new Date().toISOString(),
-        last_error: null,
-      })
-      .eq("id", existing.id);
-
-    if (updateErr) {
-      console.error("[HK][upsertIntegration] update failed", { code: updateErr.code, message: updateErr.message });
-      return { error: `[update] ${updateErr.code}: ${updateErr.message}` };
-    }
-  } else {
-    const { error: insertErr } = await supabase.from("user_integrations").insert({
-      user_id: userId,
-      provider,
-      status,
-      scopes: [
-        "heart_rate",
-        "hrv",
-        "sleep",
-        "steps",
-        "spo2",
-        "body_temperature",
-        "workouts",
-      ],
-    });
-
-    if (insertErr) {
-      console.error("[HK][upsertIntegration] insert failed", { code: insertErr.code, message: insertErr.message });
-      return { error: `[insert] ${insertErr.code}: ${insertErr.message}` };
-    }
-  }
-
-  return {};
 }
