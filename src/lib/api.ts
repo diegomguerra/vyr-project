@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Participante, RegistroDose, ResumoDiario, SerieData, ReferenciaPopulacional } from "./types";
+import { getValidUserId } from "./auth-session";
 
 // Auth functions
 export async function getSession() {
@@ -25,13 +26,13 @@ export async function signOut() {
 
 // Participante functions
 export async function getParticipante(): Promise<Participante | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  const userId = await getValidUserId();
+  if (!userId) return null;
 
   const { data, error } = await supabase
     .from("participantes")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (error) {
@@ -43,15 +44,15 @@ export async function getParticipante(): Promise<Participante | null> {
 }
 
 export async function createParticipante(payload: Partial<Participante>) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const userId = await getValidUserId();
+  if (!userId) throw new Error("User not authenticated");
 
   const codigo = `P${Math.floor(100 + Math.random() * 900)}`;
   
   const { error } = await supabase
     .from("participantes")
     .insert({
-      user_id: user.id,
+      user_id: userId,
       codigo,
       nome_publico: payload.nome_publico || "Novo Participante",
       sexo: payload.sexo || "NAO_INFORMAR",

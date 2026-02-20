@@ -8,29 +8,13 @@ import {
   isHealthKitAuthorized,
   readHealthKitData,
 } from "./healthkit";
+import { getValidSession } from "./auth-session";
 import { toast } from "@/hooks/use-toast";
 
 export interface SyncResult {
   success: boolean;
   error?: string;
   metricsWritten?: boolean;
-}
-
-// ============================================================
-// Shared session helper — always validates + refreshes token
-// ============================================================
-
-async function getValidSession() {
-  const { data: sessionData } = await supabase.auth.getSession();
-  let session = sessionData?.session;
-
-  if (!session?.access_token) {
-    console.log("[HK][AUTH] No access_token — attempting refreshSession...");
-    const { data: refreshData } = await supabase.auth.refreshSession();
-    session = refreshData.session;
-  }
-
-  return session;
 }
 
 // ============================================================
