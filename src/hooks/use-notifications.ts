@@ -1,6 +1,8 @@
+// avoid stale auth in iOS WKWebView; ensure valid session before DB writes
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./use-auth";
+import { requireValidUserId } from "@/lib/auth-session";
 
 export interface Notification {
   id: string;
@@ -44,7 +46,10 @@ export function useNotifications() {
   }, [fetchNotifications]);
 
   const markAsRead = useCallback(async (id: string) => {
-    await supabase.from("notifications").update({ read: true } as any).eq("id", id);
+    // avoid stale auth in iOS WKWebView; ensure valid session before DB writes
+    const userId = await requireValidUserId();
+    if (!userId) return;
+    await supabase.from("notifications").update({ read: true } as any).eq("id", id).eq("user_id", userId);
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
@@ -52,15 +57,17 @@ export function useNotifications() {
   }, []);
 
   const markAllAsRead = useCallback(async () => {
-    if (!user) return;
+    // avoid stale auth in iOS WKWebView; ensure valid session before DB writes
+    const userId = await requireValidUserId();
+    if (!userId) return;
     await supabase
       .from("notifications")
       .update({ read: true } as any)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("read", false);
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
-  }, [user]);
+  }, []);
 
   return { notifications, unreadCount, loading, markAsRead, markAllAsRead, refetch: fetchNotifications };
 }
@@ -95,25 +102,31 @@ export function useNotificationPreferences() {
 
   const updatePref = useCallback(
     async (key: keyof NotificationPreferences, value: boolean) => {
-      if (!user) return;
+      // avoid stale auth in iOS WKWebView; ensure valid session before DB writes
+      const userId = await requireValidUserId();
+      if (!userId) return;
+
       setPrefs((p) => ({ ...p, [key]: value }));
+
       const { data } = await supabase
         .from("notification_preferences")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .maybeSingle();
+
       if (data) {
         await supabase
           .from("notification_preferences")
           .update({ [key]: value } as any)
-          .eq("user_id", user.id);
+          .eq("user_id", userId);
       } else {
+        // avoid stale auth in iOS WKWebView; ensure valid session before DB writes
         await supabase
           .from("notification_preferences")
-          .insert({ user_id: user.id, [key]: value } as any);
+          .insert({ user_id: userId, [key]: value } as any);
       }
     },
-    [user]
+    []
   );
 
   return { prefs, loading, updatePref };

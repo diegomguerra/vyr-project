@@ -1,38 +1,56 @@
 // VYR Labs - Auth Session Helper
-// Garante um JWT válido antes de qualquer operação de escrita no banco.
-// NUNCA use supabase.auth.getUser() antes de INSERTs — use getValidUserId() aqui.
+// avoid stale auth in iOS WKWebView; ensure valid session before DB writes
+//
+// NEVER use supabase.auth.getUser() before INSERTs — use requireValidUserId() here.
+// getUser() reads from local cache and may return a user even when the JWT has expired,
+// causing auth.uid() = null in Postgres → RLS 42501 errors.
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
 /**
- * Retorna a sessão ativa com token válido.
- * Se não houver token, tenta refreshSession() antes de desistir.
- * 
- * Uso: substitua supabase.auth.getUser() por getValidSession() antes de qualquer INSERT/UPDATE.
+ * Returns a valid Session with access_token + user, or null.
+ *
+ * Strategy:
+ *   1. getSession()  — reads persisted token from storage
+ *   2. if no access_token → refreshSession() to obtain a new one
+ *   3. returns final session (or null if unauthenticated)
+ *
+ * DEV note: logs userId + expires_at for traceability (no token value is logged).
  */
-export async function getValidSession(): Promise<Session | null> {
+export async function requireValidSession(): Promise<Session | null> {
   const { data: sessionData } = await supabase.auth.getSession();
   let session = sessionData?.session;
 
   if (!session?.access_token) {
-    console.log("[AUTH] No access_token — attempting refreshSession...");
+    // Token absent or expired — attempt silent refresh before giving up
     const { data: refreshData } = await supabase.auth.refreshSession();
     session = refreshData.session;
+  }
+
+  if (import.meta.env.DEV && session?.user) {
+    console.log("[AUTH] session valid", {
+      userId: session.user.id,
+      expiresAt: session.expires_at,
+    });
   }
 
   return session ?? null;
 }
 
 /**
- * Retorna o user_id da sessão válida, ou null se não autenticado.
- * 
- * Uso:
- *   const userId = await getValidUserId();
- *   if (!userId) return; // não autenticado
+ * Returns the authenticated user's ID, or null if the session is invalid/expired.
+ *
+ * Usage:
+ *   const userId = await requireValidUserId();
+ *   if (!userId) return; // abort — not authenticated
  *   await supabase.from("table").insert({ user_id: userId, ... });
  */
-export async function getValidUserId(): Promise<string | null> {
-  const session = await getValidSession();
+export async function requireValidUserId(): Promise<string | null> {
+  const session = await requireValidSession();
   return session?.user?.id ?? null;
 }
+
+// ── Legacy aliases (kept for backward compat with healthkit-sync imports) ──
+export const getValidSession = requireValidSession;
+export const getValidUserId = requireValidUserId;

@@ -8,7 +8,8 @@ import {
   isHealthKitAuthorized,
   readHealthKitData,
 } from "./healthkit";
-import { getValidSession } from "./auth-session";
+// avoid stale auth in iOS WKWebView; ensure valid session before DB writes
+import { requireValidSession } from "./auth-session";
 import { toast } from "@/hooks/use-toast";
 
 export interface SyncResult {
@@ -33,7 +34,7 @@ export async function connectAppleHealth(): Promise<SyncResult> {
     return { success: false, error: "Permissões do Apple Health não foram concedidas." };
   }
 
-  const session = await getValidSession();
+  const session = await requireValidSession();
 
   const tokenPreview = session?.access_token
     ? `${session.access_token.slice(0, 6)}...(len=${session.access_token.length})`
@@ -81,7 +82,7 @@ export async function connectAppleHealth(): Promise<SyncResult> {
 
 /** Disconnect Apple Health */
 export async function disconnectAppleHealth(): Promise<void> {
-  const session = await getValidSession();
+  const session = await requireValidSession();
   if (!session?.user?.id) return;
 
   await supabase
@@ -94,7 +95,7 @@ export async function disconnectAppleHealth(): Promise<void> {
 /** Sync today's HealthKit data to ring_daily_data */
 export async function syncHealthKitData(): Promise<SyncResult> {
   // ─── A) Auth snapshot ───
-  const session = await getValidSession();
+  const session = await requireValidSession();
 
   const tokenPreview = session?.access_token
     ? `${session.access_token.slice(0, 6)}...(len=${session.access_token.length})`
@@ -224,7 +225,7 @@ export async function getAppleHealthStatus(): Promise<{
   connected: boolean;
   lastSync: Date | null;
 }> {
-  const session = await getValidSession();
+  const session = await requireValidSession();
   if (!session?.user?.id) return { connected: false, lastSync: null };
 
   const { data } = await supabase

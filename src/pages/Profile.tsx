@@ -1,7 +1,9 @@
+// avoid stale auth in iOS WKWebView; ensure valid session before DB writes
 import { useState, useEffect } from "react";
 import { ChevronLeft, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { requireValidUserId } from "@/lib/auth-session";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,7 +53,12 @@ export default function Profile({ onBack }: ProfileProps) {
   }, [user]);
 
   const handleSave = async () => {
-    if (!user) return;
+    // avoid stale auth in iOS WKWebView; ensure valid session before DB writes
+    const userId = await requireValidUserId();
+    if (!userId) {
+      toast({ title: "Sessão expirada", description: "Faça login novamente.", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await supabase
@@ -65,7 +72,7 @@ export default function Profile({ onBack }: ProfileProps) {
           objetivo_principal: form.objetivo_principal,
           avatar_url: form.avatar_url,
         } as any)
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
       if (error) throw error;
       toast({ title: "Perfil salvo", description: "Dados atualizados com sucesso." });
     } catch (err: any) {

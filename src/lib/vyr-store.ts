@@ -276,8 +276,7 @@ export function useVYRStore() {
   const { data: dbIntegration } = useQuery({
     queryKey: ["user_integration_apple_health"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return { connected: false, lastSync: null };
+      // avoid stale auth in iOS WKWebView; ensure valid session before DB writes
       return getAppleHealthStatus();
     },
     refetchOnWindowFocus: true,
