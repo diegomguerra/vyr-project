@@ -705,7 +705,51 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_integrations_safe: {
+        Row: {
+          created_at: string | null
+          external_user_id: string | null
+          id: string | null
+          last_error: string | null
+          last_sync_at: string | null
+          meta: Json | null
+          provider: string | null
+          scopes: string[] | null
+          status: string | null
+          token_expires_at: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          external_user_id?: string | null
+          id?: string | null
+          last_error?: string | null
+          last_sync_at?: string | null
+          meta?: Json | null
+          provider?: string | null
+          scopes?: string[] | null
+          status?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          external_user_id?: string | null
+          id?: string | null
+          last_error?: string | null
+          last_sync_at?: string | null
+          meta?: Json | null
+          provider?: string | null
+          scopes?: string[] | null
+          status?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
