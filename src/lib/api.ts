@@ -67,10 +67,14 @@ export async function createParticipante(payload: Partial<Participante>) {
 }
 
 export async function updateParticipante(id: string, patch: Partial<Participante>) {
+  const userId = await getValidUserId();
+  if (!userId) throw new Error("User not authenticated");
+
   const { error } = await supabase
     .from("participantes")
     .update(patch)
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", userId);
 
   if (error) throw error;
 }

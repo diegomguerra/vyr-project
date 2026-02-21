@@ -13,7 +13,10 @@
     "ios:diag": "cd ios/App && (ls -la) && (test -f App.xcodeproj && echo USING_PROJECT || echo USING_WORKSPACE)"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.0",
     "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "@capacitor/preferences": "^8.0.0",
     "@capgo/capacitor-health": "^8.2.14",
     "@hookform/resolvers": "^3.10.0",
     "@lovable.dev/cloud-auth-js": "^0.0.3",
@@ -67,9 +70,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "vitest": "^3.2.4",
-    "zod": "^3.25.76",
-    "@capacitor/ios": "^8.0.0",
-    "@capacitor/android": "^8.0.0"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
