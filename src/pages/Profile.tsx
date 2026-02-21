@@ -190,7 +190,7 @@ export default function Profile({ onBack }: ProfileProps) {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="w-full bg-vyr-accent-action hover:bg-vyr-accent-action/80 text-white h-12 rounded-xl font-medium"
+          className="w-full bg-vyr-accent-action hover:bg-vyr-accent-action/80 text-white h-12 rounded-xl font-medium relative z-10"
         >
           <Save className="w-4 h-4 mr-2" />
           {saving ? "Salvando..." : "Salvar alterações"}
