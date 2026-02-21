@@ -98,7 +98,7 @@ export default function Profile({ onBack }: ProfileProps) {
   }
 
   return (
-    <div className="min-h-screen bg-vyr-bg-primary px-5 pt-6 pb-28 safe-area-top safe-area-left safe-area-right">
+    <div className="min-h-screen bg-vyr-bg-primary px-5 pt-6 pb-36 safe-area-top safe-area-left safe-area-right">
       <button onClick={onBack} className="flex items-center gap-1 text-vyr-text-muted mb-6 transition-opacity active:opacity-60">
         <ChevronLeft className="w-5 h-5" />
         <span className="text-sm">Voltar</span>
