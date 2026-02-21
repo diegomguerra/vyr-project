@@ -623,7 +623,7 @@ export type Database = {
           status?: string | null
           token_expires_at?: string | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string
         }
         Update: {
           access_token?: string | null
