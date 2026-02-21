@@ -36,14 +36,10 @@ export async function connectAppleHealth(): Promise<SyncResult> {
 
   const session = await requireValidSession();
 
-  const tokenPreview = session?.access_token
-    ? `${session.access_token.slice(0, 6)}...(len=${session.access_token.length})`
-    : "NONE";
-
   console.log("[HK][connectAppleHealth][AUTH]", {
     userId: session?.user?.id ?? "NONE",
     hasToken: !!session?.access_token,
-    tokenPreview,
+    expiresAt: session?.expires_at ?? "NONE",
   });
 
   if (!session?.access_token || !session?.user?.id) {
@@ -99,14 +95,9 @@ export async function syncHealthKitData(): Promise<SyncResult> {
   // ─── A) Auth snapshot ───
   const session = await requireValidSession();
 
-  const tokenPreview = session?.access_token
-    ? `${session.access_token.slice(0, 6)}...(len=${session.access_token.length})`
-    : "NONE";
-
   console.log("[HK][AUTH] snapshot", {
     userId: session?.user?.id ?? "NONE",
     hasToken: !!session?.access_token,
-    tokenPreview,
     expiresAt: session?.expires_at ?? "NONE",
   });
 
