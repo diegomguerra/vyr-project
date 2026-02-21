@@ -69,7 +69,8 @@ jobs:
               "dependencies": ($source.dependencies + {
                 "@capacitor/core": "^8.0.0",
                 "@capacitor/ios": "^8.0.0",
-                "@capacitor/android": "^8.0.0"
+                "@capacitor/android": "^8.0.0",
+                "@capacitor/preferences": "^8.0.0"
               }),
               "devDependencies": ($source.devDependencies + {
                 "@capacitor/cli": "^8.0.0"
