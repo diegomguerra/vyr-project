@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./use-auth";
-import { requireValidUserId } from "@/lib/auth-session";
+import { requireValidUserId, retryOnAuthError } from "@/lib/auth-session";
 
 export interface Notification {
   id: string;
@@ -49,7 +49,7 @@ export function useNotifications() {
     // avoid stale auth in iOS WKWebView; ensure valid session before DB writes
     const userId = await requireValidUserId();
     if (!userId) return;
-    await supabase.from("notifications").update({ read: true } as any).eq("id", id).eq("user_id", userId);
+    await retryOnAuthError(() => supabase.from("notifications").update({ read: true } as any).eq("id", id).eq("user_id", userId));
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );

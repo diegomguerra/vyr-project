@@ -9,7 +9,7 @@ import {
   readHealthKitData,
 } from "./healthkit";
 // avoid stale auth in iOS WKWebView; ensure valid session before DB writes
-import { requireValidSession } from "./auth-session";
+import { requireValidSession, retryOnAuthError } from "./auth-session";
 import { toast } from "@/hooks/use-toast";
 
 export interface SyncResult {
@@ -54,19 +54,21 @@ export async function connectAppleHealth(): Promise<SyncResult> {
   const userId = session.user.id;
 
   // Atomic upsert — no race condition
-  const { error: upsertErr } = await supabase
-    .from("user_integrations")
-    .upsert(
-      {
-        user_id: userId,
-        provider: "apple_health",
-        status: "active",
-        last_error: null,
-        scopes: ["heart_rate", "hrv", "sleep", "steps", "spo2", "body_temperature", "workouts"],
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,provider" }
-    );
+  const { error: upsertErr } = await retryOnAuthError(() =>
+    supabase
+      .from("user_integrations")
+      .upsert(
+        {
+          user_id: userId,
+          provider: "apple_health",
+          status: "active",
+          last_error: null,
+          scopes: ["heart_rate", "hrv", "sleep", "steps", "spo2", "body_temperature", "workouts"],
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,provider" }
+      )
+  );
 
   if (upsertErr) {
     console.error("[HK][connectAppleHealth][ERR] upsert user_integrations failed", {
@@ -170,9 +172,11 @@ export async function syncHealthKitData(): Promise<SyncResult> {
 
   // ─── D) Upsert + result logging ───
   try {
-    const { error } = await supabase
-      .from("ring_daily_data")
-      .upsert(row, { onConflict: "user_id,day,source_provider" });
+    const { error } = await retryOnAuthError(() =>
+      supabase
+        .from("ring_daily_data")
+        .upsert(row, { onConflict: "user_id,day,source_provider" })
+    );
 
     if (error) {
       console.error("[HK][ERR] upsert failed", {
@@ -185,7 +189,7 @@ export async function syncHealthKitData(): Promise<SyncResult> {
       // Fallback for 42P10 (missing unique constraint match)
       if (error.code === "42P10") {
         console.log("[HK][WRITE] Fallback to plain insert (42P10)");
-        const { error: insertError } = await supabase.from("ring_daily_data").insert(row);
+        const { error: insertError } = await retryOnAuthError(() => supabase.from("ring_daily_data").insert(row));
 
         if (insertError) {
           console.error("[HK][ERR] insert fallback failed", {
@@ -202,11 +206,13 @@ export async function syncHealthKitData(): Promise<SyncResult> {
     }
 
     // Update last_sync_at
-    await supabase
-      .from("user_integrations")
-      .update({ last_sync_at: new Date().toISOString(), last_error: null })
-      .eq("user_id", userId)
-      .eq("provider", "apple_health");
+    await retryOnAuthError(() =>
+      supabase
+        .from("user_integrations")
+        .update({ last_sync_at: new Date().toISOString(), last_error: null })
+        .eq("user_id", userId)
+        .eq("provider", "apple_health")
+    );
 
     console.log("[HK][OK] wrote row", { table: "ring_daily_data", userId, day: today });
 

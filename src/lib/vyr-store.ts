@@ -6,7 +6,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { connectAppleHealth, disconnectAppleHealth, syncHealthKitData, getAppleHealthStatus } from "./healthkit-sync";
-import { getValidUserId } from "./auth-session";
+import { getValidUserId, retryOnAuthError } from "./auth-session";
 import type { 
   VYRState, 
   Checkpoint, 
@@ -299,20 +299,24 @@ export function useVYRStore() {
   const addCheckpoint = useCallback(async (note?: string) => {
     const userId = await getValidUserId();
     if (!userId) return;
-    await supabase.from("checkpoints").insert({
-      user_id: userId,
-      note: note ?? null,
-    });
+    await retryOnAuthError(() =>
+      supabase.from("checkpoints").insert({
+        user_id: userId,
+        note: note ?? null,
+      })
+    );
   }, []);
 
   const logAction = useCallback(async (action: MomentAction) => {
     const userId = await getValidUserId();
     if (!userId) return;
 
-    await supabase.from("action_logs").insert({
-      user_id: userId,
-      action,
-    });
+    await retryOnAuthError(() =>
+      supabase.from("action_logs").insert({
+        user_id: userId,
+        action,
+      })
+    );
 
     // Mostra confirmação
     setSachetConfirmation({
